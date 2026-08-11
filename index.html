@@ -926,9 +926,19 @@
     <img src="https://i.postimg.cc/2559dcpw/20260713-071242.png" alt="Excel Admin">
   </div>
   <button class="gate-btn" id="gateInstallBtn">Install App</button>
+  <p id="gateStatus" style="display:none; font-family:'Inter',sans-serif; font-size:12.5px; line-height:1.5; color:rgba(255,255,255,.75); max-width:280px; margin:0;"></p>
 </div>
 
 <!-- ============ DASHBOARD ============ -->
+<script>
+  // Registered before the gate script runs — Chrome/Android requires an
+  // active service worker before it will offer the native install prompt.
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('admin-sw.js').catch(function(err){
+      console.warn('Service worker registration failed:', err);
+    });
+  }
+</script>
 <script>
 (function(){
   // Set to false to skip the forced install gate during development/testing
@@ -939,14 +949,32 @@
     return window.matchMedia('(display-mode: standalone)').matches ||
            window.navigator.standalone === true; // iOS Safari
   }
+  function isIOS(){
+    return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS
+  }
 
   var installGate = document.getElementById('installGate');
   var gateBtn = document.getElementById('gateInstallBtn');
+  var gateStatus = document.getElementById('gateStatus');
   var deferredPrompt = null;
   var installRequested = false;
 
+  function showStatus(msg){
+    gateStatus.textContent = msg;
+    gateStatus.style.display = 'block';
+  }
+
   function triggerInstall(){
-    if(!deferredPrompt) return;
+    if(!deferredPrompt){
+      // Nothing to fire yet — the browser hasn't handed us a prompt.
+      // Most common causes: iOS/Safari (no install-prompt API at all,
+      // see the branch below), or the browser just hasn't decided this
+      // page is installable yet. Give the user feedback either way
+      // instead of the button silently doing nothing.
+      showStatus('Still preparing — if nothing happens in a few seconds, close and reopen this page, then tap Install again.');
+      return;
+    }
     var promptEvent = deferredPrompt;
     deferredPrompt = null;
     promptEvent.prompt();
@@ -959,16 +987,25 @@
     installGate.classList.remove('gate-hidden');
     document.documentElement.style.overflow = 'hidden';
 
-    window.addEventListener('beforeinstallprompt', function(e){
-      e.preventDefault();
-      deferredPrompt = e;
-      if(installRequested) triggerInstall();
-    });
+    if(isIOS()){
+      // Safari/iOS has no install-prompt API at all — "Add to Home Screen"
+      // can only be done manually via the Share sheet. Swap the button for
+      // instructions instead of leaving a button that can never do anything.
+      gateBtn.style.display = 'none';
+      showStatus('Tap the Share icon below, then "Add to Home Screen" to install.');
+    } else {
+      window.addEventListener('beforeinstallprompt', function(e){
+        e.preventDefault();
+        deferredPrompt = e;
+        gateStatus.style.display = 'none';
+        if(installRequested) triggerInstall();
+      });
 
-    gateBtn.addEventListener('click', function(){
-      installRequested = true;
-      triggerInstall();
-    });
+      gateBtn.addEventListener('click', function(){
+        installRequested = true;
+        triggerInstall();
+      });
+    }
 
     window.addEventListener('appinstalled', function(){
       // Reload so the browser relaunches it in standalone mode.
