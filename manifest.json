@@ -1,0 +1,37 @@
+{
+  "name": "Excel Admin",
+  "short_name": "Excel Admin",
+  "description": "Admin CMS for Excel Examination Services",
+  "start_url": "https://transapple.github.io/excel.admin/admin.html",
+  "scope": "https://transapple.github.io/excel.admin/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF6EC",
+  "theme_color": "#16274A",
+  "icons": [
+    {
+      "src": "https://i.postimg.cc/2559dcpw/20260713-071242.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://i.postimg.cc/2559dcpw/20260713-071242.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "https://i.postimg.cc/2559dcpw/20260713-071242.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://i.postimg.cc/2559dcpw/20260713-071242.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
