@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
 <title>Excel • Admin CMS</title>
-<link rel="manifest" href="admin-manifest.json">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#16274A">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -930,15 +930,6 @@
 </div>
 
 <!-- ============ DASHBOARD ============ -->
-<script>
-  // Registered before the gate script runs — Chrome/Android requires an
-  // active service worker before it will offer the native install prompt.
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('admin-sw.js').catch(function(err){
-      console.warn('Service worker registration failed:', err);
-    });
-  }
-</script>
 <script>
 (function(){
   // Set to false to skip the forced install gate during development/testing
