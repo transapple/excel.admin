@@ -1,0 +1,3231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<title>Excel • Admin CMS</title>
+<link rel="manifest" href="admin-manifest.json">
+<meta name="theme-color" content="#16274A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Excel Admin">
+<link rel="apple-touch-icon" href="https://i.postimg.cc/2559dcpw/20260713-071242.png">
+<link rel="icon" href="https://i.postimg.cc/2559dcpw/20260713-071242.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-900:#0A1338; --navy-800:#0F1B4C; --navy-700:#182A66;
+    --gold-500:#E3A730; --gold-300:#F2CE72; --gold-100:#FBEBC7;
+    --cream-50:#FAF6EC; --ink:#0E1230; --ink-soft:#5B6088; --line:#E7E1D0;
+    --white:#FFFFFF; --success:#2E9E5B; --danger:#C0392B;
+    --radius-lg:20px; --radius-md:14px; --radius-sm:10px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0; font-family:'Inter',sans-serif; background:var(--cream-50); color:var(--ink);
+    min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family:'Sora',sans-serif; margin:0; }
+  button{ font-family:'Inter',sans-serif; cursor:pointer; }
+  input,select,textarea{ font-family:'Inter',sans-serif; }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    background:linear-gradient(160deg, var(--navy-800), var(--navy-900) 70%);
+    color:var(--white); padding:18px 24px; display:flex; align-items:center;
+    justify-content:space-between; gap:12px; position:sticky; top:0; z-index:30;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand-mark{
+    width:36px; height:36px; border-radius:50%;
+    background:linear-gradient(145deg, var(--gold-300), var(--gold-500));
+    display:flex; align-items:center; justify-content:center; flex:none;
+    font-family:'Sora'; font-weight:800; color:var(--navy-900); font-size:15px;
+    overflow:hidden;
+  }
+  .brand-text .eyebrow{ font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold-300); font-weight:700; margin:0 0 2px;}
+  .brand-text h1{ font-size:16px; font-weight:800; }
+  .topbar-actions{ display:flex; align-items:center; gap:8px; }
+
+  /* ---------- Forced install gate (logo + button only) ---------- */
+  #installGate{
+    position:fixed; inset:0; z-index:999999;
+    background:radial-gradient(circle at 50% 30%, var(--navy-700), var(--navy-900) 75%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:22px; padding:32px 26px calc(32px + env(safe-area-inset-bottom, 0px)); text-align:center;
+  }
+  #installGate.gate-hidden{ display:none; }
+  #installGate .gate-logo{
+    width:100px; height:100px; border-radius:50%; background:var(--white);
+    overflow:hidden; box-shadow:0 12px 32px rgba(0,0,0,.35);
+  }
+  #installGate .gate-logo img{ width:100%; height:100%; object-fit:cover; border-radius:50%; }
+  #installGate .gate-btn{
+    border:none; border-radius:14px; padding:14px 32px; font-family:'Inter',sans-serif;
+    font-weight:700; font-size:15px; background:linear-gradient(145deg, var(--gold-300), var(--gold-500));
+    color:var(--navy-900); cursor:pointer; box-shadow:0 8px 20px rgba(227,167,48,.35);
+  }
+  #installGate .gate-btn:disabled{ opacity:.6; cursor:default; }
+
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:11.5px; font-weight:700; color:var(--ink-soft); margin-bottom:5px; text-transform:uppercase; letter-spacing:.04em;}
+  .field input, .field select, .field textarea{
+    width:100%; padding:11px 13px; border-radius:11px; border:1px solid var(--line);
+    font-size:13.5px; outline:none; background:var(--cream-50); color:var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{ border-color:var(--gold-500); }
+  .file-note{ font-size:11px; color:var(--ink-soft); margin:6px 0 0; line-height:1.4; }
+  .file-note a{ color:var(--navy-700); font-weight:600; }
+  /* ---------- Dashboard ---------- */
+  .dashboard{ max-width:900px; margin:0 auto; padding:22px 20px 100px; }
+  .admin-view.hidden{ display:none !important; }
+
+  /* ---------- Bottom nav ---------- */
+  .bottom-nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:80;
+    display:flex; justify-content:space-around; align-items:center;
+    padding:9px 8px calc(9px + env(safe-area-inset-bottom));
+    background:rgba(250,246,236,.94); backdrop-filter:blur(14px);
+    border-top:1px solid var(--line);
+    box-shadow:0 -6px 24px rgba(10,19,56,.07);
+  }
+  .nav-btn{
+    display:flex; flex-direction:column; align-items:center; gap:4px; background:none; border:none;
+    color:var(--ink-soft); font-size:10px; font-weight:700; cursor:pointer; padding:7px 10px;
+    border-radius:14px; position:relative;
+  }
+  .nav-btn svg{ transition:transform .2s ease; }
+  .nav-btn:active{ transform:scale(.92); }
+  .nav-btn.active{ color:var(--navy-800); }
+  .nav-btn .nav-dot{
+    position:absolute; bottom:1px; left:50%; height:3px; width:0; border-radius:100px;
+    transform:translateX(-50%); background:linear-gradient(90deg, var(--gold-500), var(--gold-300));
+    opacity:0; transition:width .3s cubic-bezier(.34,1.56,.64,1), opacity .25s ease;
+  }
+  .nav-btn.active .nav-dot{ width:20px; opacity:1; }
+  .nav-btn .badge{
+    position:absolute; top:-1px; right:6px; background:var(--gold-500); color:var(--navy-900);
+    font-size:8.5px; font-weight:800; border-radius:100px; min-width:14px; height:14px;
+    display:flex; align-items:center; justify-content:center; padding:0 3px;
+  }
+  .stats-row{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+  .stat-card{
+    flex:1; min-width:110px; background:var(--white); border:1px solid var(--line);
+    border-radius:var(--radius-md); padding:14px 16px;
+  }
+  .stat-card .num{ font-family:'Sora'; font-size:20px; font-weight:800; color:var(--navy-800); }
+  .stat-card .lbl{ font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; margin-top:2px;}
+
+  .toolbar{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap;}
+  .toolbar h2{ font-size:16px; }
+  .toolbar-actions{ display:flex; gap:8px; }
+  .btn{
+    display:inline-flex; align-items:center; gap:6px; padding:9px 14px; border-radius:10px;
+    font-size:12.5px; font-weight:700; border:1px solid var(--line); background:var(--white); color:var(--ink);
+  }
+  .btn.gold{ background:var(--gold-500); color:var(--navy-900); border:none; }
+  .btn.ghost{ background:none; border:1px solid var(--line); color:var(--ink-soft); }
+
+  /* ---------- Analytics panel ---------- */
+  .analytics-panel{
+    background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md);
+    padding:16px; margin-bottom:22px;
+  }
+  .period-toggle{ display:flex; gap:6px; }
+  .period-toggle button{
+    border:1px solid var(--line); background:var(--cream-50); color:var(--ink-soft);
+    font-size:11.5px; font-weight:700; padding:7px 12px; border-radius:100px;
+  }
+  .period-toggle button.active{ background:var(--navy-800); color:var(--white); border-color:var(--navy-800); }
+  .analytics-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px; }
+  @media(max-width:560px){ .analytics-grid{ grid-template-columns:1fr; } }
+  .rank-card{ background:var(--cream-50); border:1px solid var(--line); border-radius:var(--radius-sm); padding:13px 14px; }
+  .rank-card h4{ font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); margin:0 0 10px; }
+  .rank-row{ display:flex; align-items:center; gap:10px; padding:6px 0; }
+  .rank-row .pos{ flex:none; width:18px; font-size:11.5px; font-weight:800; color:var(--gold-500); }
+  .rank-row .nm{ flex:1; font-size:12.5px; font-weight:600; color:var(--ink); }
+  .rank-row .bar-wrap{ flex:none; width:70px; height:6px; background:var(--line); border-radius:100px; overflow:hidden; }
+  .rank-row .bar{ height:100%; background:var(--navy-800); border-radius:100px; }
+  .rank-row .cnt{ flex:none; width:26px; text-align:right; font-size:11.5px; font-weight:700; color:var(--ink-soft); }
+  .rank-empty{ font-size:12px; color:var(--ink-soft); padding:8px 0; }
+
+  /* ---------- Subjects grid (Materials → By subject) ---------- */
+  .subject-grid{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:7px; margin-bottom:20px;
+  }
+  .subject-tile{
+    aspect-ratio:1; background:var(--white); border:1px solid var(--line); border-radius:13px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+    padding:5px 3px; text-align:center; position:relative; transition:background .15s, transform .1s;
+    min-width:0; overflow:hidden;
+  }
+  .subject-tile:active{ transform:scale(.94); background:var(--cream-50); }
+  .subject-tile-ico{
+    width:26px; height:26px; border-radius:8px; color:#fff; flex:none;
+    background:linear-gradient(135deg, var(--tile-a, var(--navy-800)), var(--tile-b, var(--navy-700)));
+    display:flex; align-items:center; justify-content:center;
+  }
+  .subject-tile-ico svg{ width:13px; height:13px; }
+  .subject-tile-ico .txt{ font-family:'Sora'; font-size:9px; font-weight:800; letter-spacing:.01em; }
+  .subject-tile-lbl{
+    font-size:9px; font-weight:700; color:var(--ink); line-height:1.2;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .subject-tile-count{
+    position:absolute; top:4px; right:4px; background:var(--gold-500); color:var(--navy-900);
+    font-size:8px; font-weight:800; border-radius:100px; min-width:14px; height:14px; padding:0 3px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ---------- Materials → By type (mirrors "Browse by type" in the
+     student app) + its nested subject tabs (mirrors "Browse by subject",
+     shown inside every type). Classes are prefixed "d" (dashboard) so they
+     don't collide with the plainer .subject-grid/.subject-tile above. ---------- */
+  .dtype-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-bottom:20px; }
+  .dtype-tile{
+    background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md);
+    padding:14px 8px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer;
+    transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease; text-align:center;
+    animation:dtileIn .4s cubic-bezier(.34,1.56,.64,1) backwards;
+  }
+  @keyframes dtileIn{ from{ opacity:0; transform:translateY(8px) scale(.94); } to{ opacity:1; transform:translateY(0) scale(1); } }
+  .dtype-tile:active{ transform:scale(.95); background:var(--cream-50); }
+  .dtype-tile .ic{
+    width:36px; height:36px; border-radius:11px; color:#fff;
+    background:linear-gradient(135deg, var(--tile-a, var(--navy-800)), var(--tile-b, var(--navy-700)));
+    display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .dtype-tile .nm{ font-family:'Sora'; font-size:11.5px; font-weight:800; color:var(--ink); margin:0; }
+  .dtype-tile .cnt{ font-size:9px; color:var(--ink-soft); margin:0; }
+
+  .dsubj-tabs{ display:flex; gap:8px; overflow-x:auto; padding:2px 2px 10px; scrollbar-width:none; }
+  .dsubj-tabs::-webkit-scrollbar{ display:none; }
+  .dsubj-tile{
+    flex:none; width:66px; background:var(--white); border:1px solid var(--line); border-radius:14px;
+    padding:10px 4px; display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer;
+    text-align:center; transition:border-color .15s ease, background .15s ease, transform .15s ease;
+  }
+  .dsubj-tile:active{ transform:scale(.95); }
+  .dsubj-tile .ic{
+    width:28px; height:28px; border-radius:9px; color:#fff;
+    background:linear-gradient(135deg, var(--tile-a, var(--navy-800)), var(--tile-b, var(--navy-700)));
+    display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .dsubj-tile .ic svg{ width:14px; height:14px; }
+  .dsubj-tile .ic .txt{ font-family:'Sora'; font-size:10px; font-weight:800; }
+  .dsubj-tile .nm{ font-family:'Sora'; font-size:9px; font-weight:800; color:var(--ink); margin:0; line-height:1.25; }
+  .dsubj-tile .cnt{ font-size:8px; color:var(--ink-soft); margin:0; }
+  .dsubj-tile.active{ border-color:var(--tile-a, var(--navy-700)); border-width:1.5px; background:var(--cream-50); }
+
+  .item-list{ display:flex; flex-direction:column; gap:10px; }
+  .item-row{
+    background:var(--white); border:1px solid var(--line); border-radius:var(--radius-md);
+    padding:13px 14px; display:flex; gap:12px; align-items:flex-start;
+    user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+    transition:background .15s, transform .15s;
+  }
+  .item-row.pressing{ background:var(--cream-50); transform:scale(.99); }
+  .item-row.trashed{ opacity:.75; }
+  .press-hint{ font-size:11px; color:var(--ink-soft); margin:-8px 0 12px; }
+  .item-icon{
+    flex:none; width:38px; height:38px; border-radius:10px; background:var(--navy-800); color:var(--gold-300);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .item-body{ flex:1; min-width:0; }
+  .item-body .name{ font-size:13.5px; font-weight:700; margin-bottom:2px; }
+  .item-body .desc{ font-size:11.5px; color:var(--ink-soft); line-height:1.4; margin-bottom:6px;}
+  .item-flags{ display:flex; gap:6px; flex-wrap:wrap; }
+  .flag{ font-size:9px; font-weight:800; letter-spacing:.04em; padding:3px 7px; border-radius:6px; text-transform:uppercase; }
+  .flag.new{ background:var(--navy-800); color:var(--gold-300); }
+  .flag.free{ background:var(--success); color:var(--white); }
+  .flag.featured{ background:var(--gold-100); color:#8A6412; }
+  .flag.pin{ background:var(--navy-800); color:var(--gold-300); letter-spacing:.02em; }
+  .flag.order{ background:var(--cream-50); color:var(--ink-soft); border:1px solid var(--line); }
+  .item-actions{ flex:none; display:flex; flex-direction:column; gap:6px; align-items:center; }
+  .icon-btn{
+    width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--white);
+    display:flex; align-items:center; justify-content:center; color:var(--ink-soft);
+  }
+  .icon-btn.danger{ color:var(--danger); border-color:#f0d3ce; }
+  .empty-state{ text-align:center; padding:50px 20px; color:var(--ink-soft); font-size:13px; }
+  .pos-field{ flex:none; display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .pos-field .pos-label{ font-size:9px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft); }
+  .pos-input{
+    width:44px; padding:6px 4px; text-align:center; border-radius:8px; border:1px solid var(--line);
+    font-size:12.5px; font-weight:700; color:var(--ink); background:var(--white);
+  }
+  .pos-input:focus{ outline:none; border-color:var(--gold-500); }
+  .see-all-btn{ width:100%; margin-top:4px; justify-content:center; }
+  .brand-mark img{ width:100%; height:100%; object-fit:cover; border-radius:50%; }
+  .settings-field{ padding:12px 0; border-top:1px solid var(--line); }
+  .settings-field:first-of-type{ border-top:none; }
+  .settings-field label{ display:block; font-size:11.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em;}
+  .logo-preview-row{ display:flex; align-items:center; gap:12px; }
+  .logo-preview{
+    width:52px; height:52px; border-radius:50%; background:var(--navy-800); flex:none;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+    font-family:'Sora'; font-weight:800; color:var(--gold-300); font-size:18px;
+  }
+  .logo-preview img{ width:100%; height:100%; object-fit:cover; }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(10,19,56,.55); display:none; align-items:flex-end;
+    justify-content:center; z-index:100; padding:0;
+  }
+  .modal-overlay.show{ display:flex; }
+  @media(min-width:640px){ .modal-overlay{ align-items:center; padding:20px; } }
+  .modal-card{
+    background:var(--white); width:100%; max-width:560px; max-height:92vh; overflow-y:auto;
+    border-radius:20px 20px 0 0; padding:22px 22px 26px;
+  }
+  @media(min-width:640px){ .modal-card{ border-radius:20px; } }
+  .modal-card h3{ font-size:16px; margin-bottom:16px; }
+  .field-row{ display:flex; gap:10px; }
+  .field-row .field{ flex:1; }
+  .check-grid{ display:flex; flex-wrap:wrap; gap:7px; }
+  .check-chip{
+    font-size:11.5px; font-weight:600; padding:7px 11px; border-radius:100px; border:1px solid var(--line);
+    background:var(--cream-50); color:var(--ink-soft); cursor:pointer; user-select:none;
+  }
+  .check-chip.active{ background:var(--navy-800); color:var(--white); border-color:var(--navy-800); }
+  .ms-field{ position:relative; }
+  .ms-trigger{
+    width:100%; text-align:left; padding:11px 13px; border-radius:11px; border:1px solid var(--line);
+    font-size:13.5px; background:var(--cream-50); color:var(--ink); display:flex; align-items:center;
+    justify-content:space-between; gap:8px;
+  }
+  .ms-trigger.open{ border-color:var(--gold-500); }
+  .ms-trigger .ms-caret{ flex:none; transition:transform .15s; color:var(--ink-soft); }
+  .ms-trigger.open .ms-caret{ transform:rotate(180deg); }
+  .ms-panel{
+    display:none; position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:20;
+    background:var(--white); border:1px solid var(--line); border-radius:12px; padding:6px;
+    max-height:210px; overflow-y:auto; box-shadow:0 10px 30px rgba(10,19,56,.14);
+  }
+  .ms-panel.open{ display:block; }
+  .ms-option{ display:flex; align-items:center; gap:9px; padding:8px 7px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
+  .ms-option:hover{ background:var(--cream-50); }
+  .ms-option input{ width:16px; height:16px; accent-color:var(--navy-800); flex:none; }
+  .ms-option.disabled{ opacity:.4; cursor:not-allowed; }
+  .toggle-row{ display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-top:1px solid var(--line); }
+  .toggle-row:first-of-type{ border-top:none; }
+  .toggle-row span{ font-size:13px; font-weight:600; }
+  .switch{ position:relative; width:40px; height:23px; flex:none; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .slider{ position:absolute; inset:0; background:var(--line); border-radius:100px; transition:.2s; cursor:pointer; }
+  .slider:before{ content:''; position:absolute; width:17px; height:17px; left:3px; top:3px; background:var(--white); border-radius:50%; transition:.2s; }
+  .switch input:checked + .slider{ background:var(--success); }
+  .switch input:checked + .slider:before{ transform:translateX(17px); }
+  .modal-actions{ display:flex; gap:10px; margin-top:18px; }
+  .modal-actions button{ flex:1; padding:12px; border-radius:11px; font-size:13px; font-weight:700; border:none; }
+  .modal-cancel{ background:var(--cream-50); color:var(--ink-soft); border:1px solid var(--line) !important; }
+  .modal-save{ background:var(--navy-800); color:var(--white); }
+  .modal-delete{ background:none; color:var(--danger); border:1px solid #f0d3ce !important; flex:none; padding:12px 16px; }
+
+  /* ---------- Help & Support chat ---------- */
+  .help-msg-list{
+    flex:1; min-height:120px; max-height:44vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    display:flex; flex-direction:column; gap:8px; margin:6px 0 12px; padding-right:2px;
+  }
+  .help-msg{
+    max-width:82%; padding:10px 12px; border-radius:14px; position:relative;
+    user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+    transition:background .15s, transform .15s;
+  }
+  .help-msg.pressing{ transform:scale(.97); }
+  .help-msg.from-admin{
+    align-self:flex-end; background:var(--navy-800); color:var(--white); border-bottom-right-radius:4px;
+  }
+  .help-msg.from-student{
+    align-self:flex-start; background:var(--cream-50); border:1px solid var(--line); color:var(--ink);
+    border-bottom-left-radius:4px;
+  }
+  .help-msg-text{ font-size:13px; line-height:1.45; margin:0 0 4px; white-space:pre-wrap; word-break:break-word; }
+  .help-msg-date{ font-size:9.5px; opacity:.7; margin:0; }
+  .help-input-row{ display:flex; gap:8px; align-items:center; }
+  .help-input-row input{
+    flex:1; padding:11px 13px; border-radius:100px; border:1px solid var(--line);
+    font-family:'Inter'; font-size:13px; outline:none; background:var(--white); color:var(--ink);
+  }
+  .help-input-row input:focus{ border-color:var(--navy-700, var(--gold-500)); }
+  .help-conv-row{ cursor:pointer; }
+  .help-conv-row.unread{ border-color:var(--gold-500); background:var(--gold-100); }
+
+  .toast{
+    position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(10px);
+    background:var(--navy-900); color:var(--white); font-size:12.5px; font-weight:600;
+    padding:11px 18px; border-radius:100px; opacity:0; pointer-events:none; transition:.25s; z-index:200;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .hidden{ display:none !important; }
+</style>
+</head>
+
+<!-- =========================================================================
+     SUPABASE
+     Same Supabase project as the customer app, used with no authentication
+     at all — the PIN below is a purely client-side gate (checked in this
+     script). If "Remember this device" is left checked at login, a marker
+     is kept in this browser's localStorage so the PIN isn't required again
+     on every reload of this device; unchecking it (or logging out from
+     Settings → Security) requires the PIN again next time.
+     Catalog CRUD is exposed on window.ExcelAdmin. Since there's no auth,
+     the catalog/carts tables must have Row Level Security fully open (or
+     disabled) in Supabase for writes to succeed — see the setup notes.
+
+     TRASH FEATURE — REQUIRED SCHEMA CHANGE (run once in the Supabase SQL
+     editor if these columns don't already exist on the `catalog` table):
+
+       alter table catalog add column if not exists deleted boolean not null default false;
+       alter table catalog add column if not exists "deletedAt" timestamptz;
+
+     "Move to trash" sets deleted = true instead of removing the row, so
+     items can be restored. The customer app should filter out rows where
+     deleted = true (add `.eq('deleted', false)` to its catalog query, or
+     an equivalent RLS/view filter) so trashed items disappear from it.
+     Permanently deleting a row (from the Trash view) still does a real
+     DB delete via deleteItem() and cannot be undone.
+
+     FORMAT / CONTENT / PRICE FEATURE — REQUIRED SCHEMA CHANGE (also run
+     once in the SQL editor if these columns don't already exist):
+
+       alter table catalog add column if not exists format text;
+       alter table catalog add column if not exists "contentType" text;
+       alter table catalog add column if not exists "contentUrl" text;
+       alter table catalog add column if not exists price numeric;
+
+     PAID-MATERIAL LOCK / UNLOCK PIN — REQUIRED SCHEMA CHANGE (run once):
+     Payment for paid materials happens manually, outside the app (mobile
+     money, cash, etc). Each paid item can have a PIN set here in the
+     Admin CMS (Materials → edit item). A free item is never locked. Once
+     you've manually confirmed a student's payment (e.g. after they order
+     the item and message you), look up that item's PIN on the Materials
+     tab and send it to the student yourself — they type it into the
+     customer app to unlock that material there.
+
+       alter table catalog add column if not exists pin text;
+
+     IMPORTANT: the customer app's catalog query deliberately selects an
+     explicit column list that excludes `pin`, so the real PIN value is
+     never sent to student devices. Unlock verification instead happens via
+     a Postgres function that only ever returns true/false, and — on a
+     correct PIN — records the unlock against that student's account, so it
+     follows them to any device they sign into (rather than unlocking the
+     material for every student). Run this once:
+
+       create table if not exists material_unlocks (
+         user_id uuid not null,
+         material_id uuid not null,
+         unlocked_at timestamptz not null default now(),
+         primary key (user_id, material_id)
+       );
+       alter table material_unlocks enable row level security;
+       create policy "allow anon select" on material_unlocks
+         for select to anon using (true);
+
+       create or replace function verify_material_pin(p_material_id uuid, p_entered_pin text, p_user_id uuid)
+       returns boolean
+       language plpgsql
+       security definer
+       set search_path = public
+       as $$
+       declare
+         ok boolean;
+       begin
+         select exists (
+           select 1 from catalog
+           where id = p_material_id
+             and pin is not null and pin <> ''
+             and pin = p_entered_pin
+         ) into ok;
+
+         if ok then
+           insert into material_unlocks (user_id, material_id)
+           values (p_user_id, p_material_id)
+           on conflict (user_id, material_id) do nothing;
+         end if;
+
+         return ok;
+       end;
+       $$;
+       grant execute on function verify_material_pin(uuid, text, uuid) to anon;
+
+       create or replace function get_user_unlocks(p_user_id uuid)
+       returns setof uuid
+       language sql
+       security definer
+       set search_path = public
+       as $$
+         select material_id from material_unlocks where user_id = p_user_id;
+       $$;
+       grant execute on function get_user_unlocks(uuid) to anon;
+
+     Note: with this app's no-real-auth model (open anon RLS), this keeps
+     the PIN out of ordinary API responses and dev-tools network traffic,
+     but isn't a substitute for real authentication if that ever matters.
+
+     "PAID OPEN" STAT (Home tab, top of this CMS) — the customer app logs
+     an 'unlock' analytics event (value = the material's id) the first time
+     a student successfully unlocks each paid item, using the same
+     `analytics_events` table set up below. No extra schema change needed
+     beyond the ANALYTICS SETUP further down — just make sure that table
+     exists.
+
+     MULTI-IMAGE UPLOAD — REQUIRED SCHEMA CHANGE (also run once if this
+     column doesn't already exist): image materials can now have up to 5
+     images uploaded at once, stored as a JSON array of URLs. "contentUrl"
+     above is still kept in sync with the first image for backward
+     compatibility with anything reading a single URL.
+
+       alter table catalog add column if not exists "contentUrls" jsonb;
+
+     "NEW" BADGE AUTO-EXPIRY — REQUIRED SCHEMA CHANGE (run once if this
+     column doesn't already exist): the "NEW" badge now automatically
+     disappears 7 days after a material is first marked new, instead of
+     staying on until someone manually unchecks it. newSince is stamped by
+     this Admin CMS the moment "Mark as New" is checked, and cleared when
+     it's unchecked — no manual date entry needed.
+
+       alter table catalog add column if not exists "newSince" timestamptz;
+
+     PAST PAPERS (exam board + year) — REQUIRED SCHEMA CHANGE (run once if
+     these columns don't already exist): lets an admin mark a material as a
+     past paper and tag it with the examination board/company it's from
+     (e.g. "Wakisha Joint Mock") plus the year it was sat. There's no
+     separate "boards" table — the list of boards offered while typing is
+     just every distinct examBoard value already saved, so re-using a name
+     (regardless of case/spacing) automatically groups papers together, and
+     any new name just as automatically becomes a new board. A board named
+     "Excel" is treated specially by the customer app: those papers also
+     appear in its dedicated "Excel Papers" tile, filtered by latest/last
+     year, in addition to the general "Past Papers" tile.
+
+       alter table catalog add column if not exists "isPastPaper" boolean not null default false;
+       alter table catalog add column if not exists "examBoard" text;
+       alter table catalog add column if not exists "examYear" integer;
+
+     LATEST PAPERS — REQUIRED SCHEMA CHANGE (run once if this column
+     doesn't already exist): a simple on/off flag (no board/year needed)
+     that surfaces a material in the customer app's "Latest Papers" tile
+     on the home screen (Browse by type, between Past Papers and Excel
+     Papers).
+
+       alter table catalog add column if not exists "isLatestPaper" boolean not null default false;
+
+     REQUIRED STORAGE BUCKET — PDF and image materials are uploaded straight
+     from the admin's device (not pasted as links), via Supabase Storage:
+       1. In the Supabase dashboard, go to Storage → New bucket.
+       2. Name it exactly:  materials
+       3. Toggle "Public bucket" ON (so the customer app can open the
+          files directly), then Save.
+     No extra policy setup should be needed for a public bucket, but if
+     uploads fail with a permissions error, add a Storage policy allowing
+     anon INSERT on the `materials` bucket (consistent with this app's
+     no-real-auth model).
+
+     ANALYTICS SETUP (run once in the Supabase SQL editor):
+
+       create table analytics_events (
+         id bigint generated always as identity primary key,
+         event_type text not null,          -- 'visit' | 'subject' | 'class' | 'unlock' | ...
+         value text,                        -- subject/class name, material id for 'unlock', null for visits
+         device_id text,
+         event_date date not null default current_date,
+         created_at timestamptz not null default now()
+       );
+       alter table analytics_events enable row level security;
+       create policy "allow anon insert" on analytics_events
+         for insert to anon with check (true);
+       create policy "allow anon select" on analytics_events
+         for select to anon using (true);
+       alter publication supabase_realtime add table analytics_events;
+
+     The customer app only ever inserts rows; only this Admin CMS reads
+     them, in the "App activity" panel below.
+
+     APP SETTINGS (logo / description / motto) — REQUIRED SCHEMA CHANGE
+     (run once in the Supabase SQL editor if this table doesn't exist yet):
+
+       create table if not exists app_settings (
+         id text primary key default 'main',
+         logo_url text,
+         description text,
+         motto text,
+         whatsapp_number text,
+         support_email text,
+         updated_at timestamptz not null default now()
+       );
+       alter table app_settings enable row level security;
+       create policy "allow anon select" on app_settings for select to anon using (true);
+       create policy "allow anon upsert" on app_settings for insert to anon with check (true);
+       create policy "allow anon update" on app_settings for update to anon using (true);
+       alter publication supabase_realtime add table app_settings;
+
+     If app_settings already exists from before whatsapp_number/support_email
+     existed, run this once instead:
+
+       alter table app_settings add column if not exists whatsapp_number text;
+       alter table app_settings add column if not exists support_email text;
+
+     This is a single row (id = 'main') edited from Settings in this Admin
+     CMS. Both this app and the customer app subscribe to it and apply the
+     logo, description, motto, WhatsApp number and support email everywhere
+     those appear. The logo image itself is uploaded to the same public
+     "materials" Storage bucket used for lesson files, under a "branding/"
+     path.
+
+     NOTIFICATIONS (posted from the Notifications tab in this Admin CMS,
+     shown in the student app's notification inbox) — REQUIRED SCHEMA
+     CHANGE (run once in the Supabase SQL editor if this table doesn't
+     exist yet):
+
+       create table if not exists notifications (
+         id uuid primary key default gen_random_uuid(),
+         title text not null,
+         body text,
+         created_at timestamptz not null default now()
+       );
+       alter table notifications enable row level security;
+       create policy "allow anon select" on notifications for select to anon using (true);
+       create policy "allow anon insert" on notifications for insert to anon with check (true);
+       create policy "allow anon delete" on notifications for delete to anon using (true);
+       alter publication supabase_realtime add table notifications;
+
+     Both this Admin CMS and the customer app subscribe to this table live;
+     the customer app should render each row (title/body/created_at) in its
+     own notification inbox UI and can order by created_at descending.
+
+     HELP & SUPPORT MESSAGES (student "Help & Support" chat in Settings,
+     replied to from the Help tab in this Admin CMS) — REQUIRED SCHEMA
+     CHANGE (run once in the Supabase SQL editor if this table doesn't
+     exist yet):
+
+       create table if not exists support_messages (
+         id uuid primary key default gen_random_uuid(),
+         device_id text not null,
+         user_id text,
+         user_name text,
+         sender text not null check (sender in ('student','admin')),
+         message text not null,
+         created_at timestamptz not null default now(),
+         read_by_admin boolean not null default false,
+         read_by_student boolean not null default false
+       );
+       alter table support_messages enable row level security;
+       create policy "allow anon select" on support_messages for select to anon using (true);
+       create policy "allow anon insert" on support_messages for insert to anon with check (true);
+       create policy "allow anon update" on support_messages for update to anon using (true);
+       create policy "allow anon delete" on support_messages for delete to anon using (true);
+       alter publication supabase_realtime add table support_messages;
+
+     One "thread" = one device_id (the same stable per-device id already
+     used for carts), so it works whether or not the student is signed in.
+     The student app inserts sender='student' rows and live-subscribes
+     filtered to its own device_id only; this Admin CMS reads/writes every
+     thread and inserts sender='admin' rows to reply. Deleting a row (from
+     either app, via long-press) is permanent for both sides since they
+     share the same row.
+     ========================================================================= -->
+<!-- Loaded as a classic (non-module) global script on purpose: this file is
+     wrapped into a native app (e.g. App Creator 24) which loads it from local
+     assets, essentially file:// origin. Browsers/WebViews refuse to execute
+     <script type="module"> from file:// (CORS), which was crashing the
+     wrapped app on launch. The UMD build below exposes a global `supabase`
+     object and works fine from local assets. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  const supabaseUrl = "https://ggubkuxgrmsqjccgireu.supabase.co";
+  const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdndWJrdXhncm1zcWpjY2dpcmV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjIzMzEsImV4cCI6MjA5OTU5ODMzMX0.tsLYa_4tGM1oVTg60Y7x3mc5clpYAB7eQqCTC2f3Rjc";
+
+  // Note: the UMD build above already declares a global `supabase` variable
+  // (the library namespace). We deliberately reassign it here rather than
+  // `const supabase = ...`, because redeclaring it with const/let would
+  // throw "Identifier 'supabase' has already been declared" — both classic
+  // scripts share the same global scope.
+  supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+  // The PIN gate has been removed — the app now loads straight into the
+  // dashboard. `onReady` just tells the rest of the file (below) that
+  // Supabase is set up and it's safe to start the live subscriptions.
+  window.ExcelAdmin = {
+    onReady(callback){
+      callback();
+    },
+
+    // Live-subscribes to the catalog table. `callback` receives an object
+    // keyed by id (matching the shape the rest of this file expects), or
+    // {} if the table is empty/unreachable. Returns an unsubscribe function.
+    subscribeCatalog(callback){
+      async function loadAndEmit(){
+        try {
+          const { data, error } = await supabase
+            .from('catalog')
+            .select('*')
+            .order('order', { ascending: true });
+          if(error) throw error;
+          const byId = {};
+          (data || []).forEach(row => {
+            const { id, ...rest } = row;
+            byId[id] = rest;
+          });
+          callback(byId);
+        } catch(err){
+          console.error('Catalog fetch failed:', err);
+          callback({});
+        }
+      }
+
+      loadAndEmit();
+      const channel = supabase
+        .channel('admin-catalog-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'catalog' }, loadAndEmit)
+        .subscribe();
+
+      return () => supabase.removeChannel(channel);
+    },
+
+    newItemId(){
+      return crypto.randomUUID();
+    },
+
+    // Uploads a PDF or image File object (picked from the admin's device)
+    // to the public "materials" Storage bucket and returns its public URL,
+    // to be saved as the item's contentUrl. See the setup note near the
+    // top of this file for creating that bucket.
+    async uploadFile(file, kind){
+      const ext = (file.name.split('.').pop() || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const rand = Math.random().toString(36).slice(2, 8);
+      const path = `${kind}/${Date.now()}-${rand}${ext ? '.' + ext : ''}`;
+      const { error: uploadError } = await supabase.storage
+        .from('materials')
+        .upload(path, file, { upsert: false, contentType: file.type || undefined });
+      if(uploadError) throw uploadError;
+      const { data } = supabase.storage.from('materials').getPublicUrl(path);
+      return data.publicUrl;
+    },
+
+    async saveItem(id, data){
+      // If the one-time `isPastPaper` / `examBoard` / `examYear` / `newSince`
+      // migrations (see setup notes near the top of this file) haven't been
+      // run yet, saving ANY material — not just past papers — would
+      // otherwise fail outright with a "column does not exist" error.
+      // Instead, silently drop whichever field(s) get rejected and retry,
+      // so the rest of the material still saves normally.
+      //
+      // Supabase (PostgREST) checks its own schema cache before ever
+      // reaching Postgres, so a missing column normally comes back as
+      // code "PGRST204" with a message like:
+      //   Could not find the 'examBoard' column of 'catalog' in the schema cache
+      // rather than Postgres's own 42703 "column ... does not exist" — this
+      // handles both forms just in case.
+      let payload = { id, ...data };
+      for(let attempt = 0; attempt < 6; attempt++){
+        const { error } = await supabase.from('catalog').upsert(payload);
+        if(!error) return;
+        const msg = error.message || '';
+        const missingColMatch =
+          /Could not find the '(\w+)' column/i.exec(msg) ||
+          /column "?(\w+)"? of relation "catalog" does not exist/i.exec(msg);
+        const isMissingColError = error.code === 'PGRST204' || error.code === '42703';
+        if(isMissingColError && missingColMatch){
+          const { [missingColMatch[1]]: _drop, ...rest } = payload;
+          payload = rest;
+          continue;
+        }
+        throw error;
+      }
+    },
+
+    // Hard-deletes a row permanently (used from the Trash view only — the
+    // regular "Move to trash" action just sets the `deleted` flag via
+    // saveItem so items can still be restored).
+    async deleteItem(id){
+      const { error } = await supabase.from('catalog').delete().eq('id', id);
+      if(error) throw error;
+    },
+
+    // ---- Analytics ---------------------------------------------------
+    // Live-subscribes to the analytics_events table the customer app
+    // writes to (see the SQL setup note near the bottom of this file).
+    // `callback` receives the raw row list (event_type, value, event_date,
+    // device_id) for the last 90 days; all grouping/aggregation (visits
+    // per day, most-viewed subject/class, etc.) happens client-side in
+    // renderAnalytics() below so this stays a single simple query.
+    subscribeAnalytics(callback){
+      async function loadAndEmit(){
+        try {
+          const since = new Date();
+          since.setDate(since.getDate() - 89);
+          const sinceStr = since.toISOString().slice(0,10);
+          const { data, error } = await supabase
+            .from('analytics_events')
+            .select('event_type,value,event_date,device_id')
+            .gte('event_date', sinceStr)
+            .order('event_date', { ascending: false })
+            .limit(20000);
+          if(error) throw error;
+          callback(data || []);
+        } catch(err){
+          console.error('Analytics fetch failed:', err);
+          callback([]);
+        }
+      }
+
+      loadAndEmit();
+      const channel = supabase
+        .channel('admin-analytics-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'analytics_events' }, loadAndEmit)
+        .subscribe();
+
+      return () => supabase.removeChannel(channel);
+    },
+
+    // ---- App settings (logo / description / motto) -------------------
+    // Single row (id='main'). Live-subscribes so both this Admin CMS and
+    // the customer app pick up branding changes immediately.
+    subscribeSettings(callback){
+      async function loadAndEmit(){
+        try {
+          const { data, error } = await supabase
+            .from('app_settings')
+            .select('*')
+            .eq('id', 'main')
+            .maybeSingle();
+          if(error) throw error;
+          callback(data || {});
+        } catch(err){
+          console.error('Settings fetch failed:', err);
+          callback({});
+        }
+      }
+
+      loadAndEmit();
+      const channel = supabase
+        .channel('admin-settings-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, loadAndEmit)
+        .subscribe();
+
+      return () => supabase.removeChannel(channel);
+    },
+
+    async saveSettings(data){
+      const { error } = await supabase.from('app_settings').upsert({ id: 'main', ...data, updated_at: new Date().toISOString() });
+      if(error) throw error;
+    },
+
+    // ---- Notifications -------------------------------------------------
+    // Live-subscribes to the notifications table. `callback` receives the
+    // row list, newest first.
+    subscribeNotifications(callback){
+      async function loadAndEmit(){
+        try {
+          const { data, error } = await supabase
+            .from('notifications')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(200);
+          if(error) throw error;
+          callback(data || []);
+        } catch(err){
+          console.error('Notifications fetch failed:', err);
+          callback([]);
+        }
+      }
+
+      loadAndEmit();
+      const channel = supabase
+        .channel('admin-notifications-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, loadAndEmit)
+        .subscribe();
+
+      return () => supabase.removeChannel(channel);
+    },
+
+    async sendNotification({ title, body }){
+      const { error } = await supabase.from('notifications').insert({ title, body });
+      if(error) throw error;
+    },
+
+    async deleteNotification(id){
+      const { error } = await supabase.from('notifications').delete().eq('id', id);
+      if(error) throw error;
+    },
+
+    // ---- Help & Support ---------------------------------------------------
+    // Live-subscribes to every student's Help & Support thread (all rows,
+    // no filter — this Admin CMS needs to see every device's messages).
+    // `callback` receives the full row list, oldest first; the dashboard
+    // groups it into per-device conversations client-side.
+    subscribeSupportMessages(callback){
+      async function loadAndEmit(){
+        try {
+          const { data, error } = await supabase
+            .from('support_messages')
+            .select('*')
+            .order('created_at', { ascending: true });
+          if(error) throw error;
+          callback(data || []);
+        } catch(err){
+          console.error('Support messages fetch failed:', err);
+          callback([]);
+        }
+      }
+
+      loadAndEmit();
+      const channel = supabase
+        .channel('admin-support-messages-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'support_messages' }, loadAndEmit)
+        .subscribe();
+
+      return () => supabase.removeChannel(channel);
+    },
+
+    async replySupportMessage({ device_id, user_id }, message){
+      const { error } = await supabase.from('support_messages').insert({
+        device_id, user_id: user_id || null, sender: 'admin', message,
+      });
+      if(error) throw error;
+    },
+
+    async markThreadReadByAdmin(device_id){
+      const { error } = await supabase
+        .from('support_messages')
+        .update({ read_by_admin: true })
+        .eq('device_id', device_id)
+        .eq('sender', 'student')
+        .eq('read_by_admin', false);
+      if(error) throw error;
+    },
+
+    async deleteSupportMessage(id){
+      const { error } = await supabase.from('support_messages').delete().eq('id', id);
+      if(error) throw error;
+    }
+  };
+
+  // Module scripts always run *after* the page finishes parsing (like
+  // `defer`), so a plain <script> further down the page can execute before
+  // this one does. Dispatching this event lets that script wait safely
+  // instead of racing window.ExcelAdmin's existence.
+  window.dispatchEvent(new Event('excel-admin-ready'));
+</script>
+
+<body>
+
+<!-- ============ FORCED INSTALL GATE ============ -->
+<!-- Shown full-screen instead of the app whenever this is opened in a plain
+     browser tab (not installed/standalone). Just the logo and an Install
+     button — there is no way to dismiss this and continue in the browser;
+     installing is the only path in. -->
+<div id="installGate" class="gate-hidden">
+  <div class="gate-logo">
+    <img src="https://i.postimg.cc/2559dcpw/20260713-071242.png" alt="Excel Admin">
+  </div>
+  <button class="gate-btn" id="gateInstallBtn">Install App</button>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<script>
+(function(){
+  // Set to false to skip the forced install gate during development/testing
+  // (e.g. previewing in a plain browser tab without installing each time).
+  var FORCE_INSTALL_GATE = true;
+
+  function isStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           window.navigator.standalone === true; // iOS Safari
+  }
+
+  var installGate = document.getElementById('installGate');
+  var gateBtn = document.getElementById('gateInstallBtn');
+  var deferredPrompt = null;
+  var installRequested = false;
+
+  function triggerInstall(){
+    if(!deferredPrompt) return;
+    var promptEvent = deferredPrompt;
+    deferredPrompt = null;
+    promptEvent.prompt();
+    promptEvent.userChoice.then(function(choice){
+      if(choice.outcome !== 'accepted') installRequested = false;
+    });
+  }
+
+  if(!isStandalone() && FORCE_INSTALL_GATE){
+    installGate.classList.remove('gate-hidden');
+    document.documentElement.style.overflow = 'hidden';
+
+    window.addEventListener('beforeinstallprompt', function(e){
+      e.preventDefault();
+      deferredPrompt = e;
+      if(installRequested) triggerInstall();
+    });
+
+    gateBtn.addEventListener('click', function(){
+      installRequested = true;
+      triggerInstall();
+    });
+
+    window.addEventListener('appinstalled', function(){
+      // Reload so the browser relaunches it in standalone mode.
+      window.location.reload();
+    });
+  }
+})();
+</script>
+<div class="dashboard hidden" id="dashboard">
+  <div class="topbar" style="margin:-22px -20px 22px; border-radius:0 0 20px 20px;">
+    <div class="brand">
+      <div class="brand-mark" id="brandMarkDashboard">EX</div>
+      <div class="brand-text">
+        <p class="eyebrow" id="brandEyebrowDashboard">Excel Examination Services</p>
+        <h1>Catalog CMS</h1>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HOME VIEW ============ -->
+  <div class="admin-view" id="view-home">
+    <div class="stats-row">
+      <div class="stat-card"><div class="num" id="statTotal">0</div><div class="lbl">Materials</div></div>
+      <div class="stat-card"><div class="num" id="statFree">0</div><div class="lbl">Free items</div></div>
+      <div class="stat-card"><div class="num" id="statPaidItems">0</div><div class="lbl">Paid items</div></div>
+      <div class="stat-card"><div class="num" id="statPaidOpen">0</div><div class="lbl">Paid open</div></div>
+    </div>
+
+    <div class="analytics-panel">
+      <div class="toolbar" style="margin-bottom:0;">
+        <h2>App activity</h2>
+        <div class="period-toggle" id="periodToggle">
+          <button data-period="today" class="active" onclick="setAnalyticsPeriod('today', this)">Today</button>
+          <button data-period="7" onclick="setAnalyticsPeriod('7', this)">Last 7 days</button>
+          <button data-period="30" onclick="setAnalyticsPeriod('30', this)">Last 30 days</button>
+          <button data-period="all" onclick="setAnalyticsPeriod('all', this)">All time</button>
+        </div>
+      </div>
+
+      <div class="stats-row" style="margin-top:14px; margin-bottom:0;">
+        <div class="stat-card"><div class="num" id="statVisits">0</div><div class="lbl" id="statVisitsLbl">Visits today</div></div>
+        <div class="stat-card"><div class="num" id="statClassClicks">0</div><div class="lbl">Class views</div></div>
+      </div>
+
+      <div class="analytics-grid">
+        <div class="rank-card">
+          <h4>Most viewed subjects</h4>
+          <div id="subjectRankList"></div>
+        </div>
+        <div class="rank-card">
+          <h4>Most viewed classes</h4>
+          <div id="classRankList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MATERIALS VIEW ============ -->
+  <div class="admin-view hidden" id="view-materials">
+    <div class="period-toggle" id="materialsModeToggle" style="margin-bottom:16px;">
+      <button data-mode="subject" class="active" onclick="setMaterialsMode('subject', this)">By subject</button>
+      <button data-mode="type" onclick="setMaterialsMode('type', this)">By type</button>
+      <button data-mode="all" onclick="setMaterialsMode('all', this)">All materials</button>
+    </div>
+
+    <!-- ---- By subject: 4-column grid, tap a subject to add/manage its posts ---- -->
+    <div id="subjectGridWrap">
+      <div class="toolbar" style="margin-bottom:6px;">
+        <h2>Browse by subject</h2>
+      </div>
+      <p class="press-hint" style="margin-top:-4px;">Tap a subject to add or manage its papers, summary, notes & videos.</p>
+      <div class="subject-grid" id="subjectGrid"></div>
+    </div>
+
+    <!-- ---- By type: mirrors "Browse by type" in the student app exactly.
+         Tap a type tile → pick a subject tab (same 28 subjects nested under
+         every type over there) → add/manage posts already scoped to that
+         exact type + subject, so what's posted here is guaranteed to render
+         in the matching tile/tab in the student app. ---- -->
+    <div id="typeGridWrap" class="hidden">
+      <div class="toolbar" style="margin-bottom:6px;">
+        <h2>Browse by type</h2>
+      </div>
+      <p class="press-hint" style="margin-top:-4px;">Tap a type, then a subject, to add or manage posts for that exact spot in the app.</p>
+      <div class="dtype-grid" id="typeGrid"></div>
+    </div>
+
+    <div id="typeDetailWrap" class="hidden">
+      <div class="toolbar" style="margin-bottom:6px;">
+        <button class="btn ghost" onclick="closeTypeDetail()">← Back to types</button>
+      </div>
+      <div class="toolbar" style="margin-bottom:2px;">
+        <h2 id="typeDetailTitle" style="font-size:16px;">Books</h2>
+        <button class="btn gold" onclick="addMaterialForType()">+ Add</button>
+      </div>
+      <p class="press-hint" id="typeDetailSubtitle" style="margin-top:-2px; margin-bottom:10px;">0 items · all subjects</p>
+      <div class="dsubj-tabs" id="typeDetailSubjectTabs"></div>
+      <p class="press-hint" style="margin:2px 0 8px;">Press and hold a post to edit or delete it.</p>
+      <div class="item-list" id="typeDetailItemList"></div>
+      <div class="empty-state hidden" id="typeDetailEmpty"></div>
+    </div>
+
+    <!-- ---- All materials: original flat list ---- -->
+    <div id="allMaterialsWrap" class="hidden">
+      <div class="toolbar">
+        <h2 id="listTitle">Materials</h2>
+        <div class="toolbar-actions">
+          <button class="btn ghost hidden" id="trashToggleBtn" onclick="toggleTrashView()">← Back to catalog</button>
+          <button class="btn gold" id="addMaterialBtn" onclick="openItemModal()">+ Add material</button>
+        </div>
+      </div>
+
+      <p class="press-hint" id="listHint">Press and hold a material to edit or delete it.</p>
+      <div class="item-list" id="itemList"></div>
+      <div class="empty-state hidden" id="emptyState">
+        No materials yet. Click <strong>"+ Add material"</strong> to create your first one.
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ NOTIFICATIONS VIEW ============ -->
+  <div class="admin-view hidden" id="view-notifications">
+    <div class="toolbar">
+      <h2>Notifications</h2>
+    </div>
+    <div class="analytics-panel">
+      <div class="field">
+        <label>Title</label>
+        <input type="text" id="nTitle" placeholder="e.g. New Chemistry paper added">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Message</label>
+        <textarea id="nBody" rows="3" placeholder="What should students see?"></textarea>
+      </div>
+      <button class="btn gold" style="width:100%; justify-content:center; margin-top:14px;" onclick="sendNotification()">📣 Send to app</button>
+    </div>
+
+    <div class="toolbar" style="margin-bottom:10px;">
+      <h2 style="font-size:14px;">Sent notifications</h2>
+    </div>
+    <div class="item-list" id="notificationList"></div>
+    <div class="empty-state hidden" id="notifEmptyState">No notifications sent yet.</div>
+  </div>
+
+  <!-- ============ HELP & SUPPORT VIEW ============ -->
+  <div class="admin-view hidden" id="view-help">
+    <div class="toolbar">
+      <h2>Help & Support</h2>
+    </div>
+    <p class="press-hint" id="helpListHint">Tap a conversation to reply. Press and hold any message to delete it.</p>
+    <div class="item-list" id="helpConversationList"></div>
+    <div class="empty-state hidden" id="helpConversationsEmpty">No messages from students yet.</div>
+  </div>
+
+  <!-- ============ SETTINGS VIEW ============ -->
+  <div class="admin-view hidden" id="view-settings">
+    <div class="toolbar">
+      <h2>Settings</h2>
+    </div>
+
+    <!-- General -->
+    <div class="toolbar" style="margin-bottom:10px;"><h2 style="font-size:14px;">General</h2></div>
+    <div class="analytics-panel">
+      <div class="toggle-row" style="border-top:none;">
+        <span>Trash</span>
+        <button class="btn ghost" id="settingsTrashBtn" onclick="openTrashFromSettings()">🗑 Trash</button>
+      </div>
+    </div>
+
+    <!-- Branding -->
+    <div class="toolbar" style="margin-bottom:10px;"><h2 style="font-size:14px;">Branding</h2></div>
+    <div class="analytics-panel">
+      <div class="settings-field" style="border-top:none;">
+        <label>App logo</label>
+        <div class="logo-preview-row">
+          <div class="logo-preview" id="logoPreview">EX</div>
+          <div style="flex:1;">
+            <input type="file" id="fLogoFile" accept="image/*" onchange="previewLogoFile()">
+            <p class="file-note">Shown as the app logo.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-field">
+        <label>App description</label>
+        <textarea id="fAppDescription" rows="3" placeholder="Short paragraph shown in the app's About section"></textarea>
+      </div>
+
+      <div class="settings-field">
+        <label>App motto</label>
+        <input type="text" id="fAppMotto" placeholder="e.g. Your partner in academic success">
+      </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="toolbar" style="margin-bottom:10px;"><h2 style="font-size:14px;">Contact</h2></div>
+    <div class="analytics-panel">
+      <div class="settings-field" style="border-top:none;">
+        <label>WhatsApp number</label>
+        <input type="text" id="fWhatsappNumber" inputmode="tel" placeholder="e.g. 256788737517 (no + or spaces)">
+        <p class="file-note">Used for the "WhatsApp orders & enquiries" contact, feedback, and order messages in the student app. Use international format with no "+" or spaces.</p>
+      </div>
+      <div class="settings-field">
+        <label>Support email (optional)</label>
+        <input type="email" id="fSupportEmail" placeholder="e.g. support@excelexams.com">
+        <p class="file-note">If set, an "Email us" option appears in the student app's Support section. Leave blank to hide it.</p>
+      </div>
+    </div>
+
+    <button class="btn gold" style="width:100%; justify-content:center; margin:4px 0 22px;" onclick="saveBranding()">Save settings</button>
+  </div>
+</div>
+
+<!-- ============ BOTTOM NAV ============ -->
+<nav class="bottom-nav hidden" id="adminBottomNav">
+  <button class="nav-btn active" data-tab="home" onclick="showAdminTab('home')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
+    Home
+    <span class="nav-dot"></span>
+  </button>
+  <button class="nav-btn" data-tab="materials" onclick="showAdminTab('materials')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V4H6.5A2.5 2.5 0 004 6.5v13z"></path></svg>
+    Materials
+    <span class="nav-dot"></span>
+  </button>
+  <button class="nav-btn" data-tab="notifications" onclick="showAdminTab('notifications')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 01-3.46 0"></path></svg>
+    Notifications
+    <span class="badge" id="notifBadge" style="display:none;">0</span>
+    <span class="nav-dot"></span>
+  </button>
+  <button class="nav-btn" data-tab="help" onclick="showAdminTab('help')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 11.5a8.5 8.5 0 01-12.4 7.6L3 20l1-5.4A8.5 8.5 0 1121 11.5z"></path></svg>
+    Help
+    <span class="badge" id="helpNavBadge" style="display:none;">0</span>
+    <span class="nav-dot"></span>
+  </button>
+  <button class="nav-btn" data-tab="settings" onclick="showAdminTab('settings')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008.6 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H2.5a2 2 0 110-4h.09A1.65 1.65 0 004.6 8.6a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V2.5a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
+    Settings
+    <span class="nav-dot"></span>
+  </button>
+</nav>
+
+<!-- ============ ADD/EDIT ITEM MODAL ============ -->
+<div class="modal-overlay" id="itemModalOverlay" onclick="if(event.target===this) closeItemModal()">
+  <div class="modal-card">
+    <h3 id="modalTitle">Add material</h3>
+
+    <div class="field">
+      <label>Title</label>
+      <input type="text" id="fName" placeholder="e.g. Summarized Notes">
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <textarea id="fDesc" rows="2" placeholder="Short one-line description shown under the title"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Icon</label>
+      <select id="fIcon"></select>
+    </div>
+
+    <div class="field">
+      <label>Format</label>
+      <select id="fFormat" onchange="updateFormatUI()"></select>
+      <p class="file-note">Choose "Past Papers", "Latest Papers", or "Excel Papers" to file this material straight into that tile in the student app — each one also asks for the examination board/company (and year) below, same as manually toggling "Past paper" / "Latest paper" further down.</p>
+    </div>
+
+    <div class="field hidden" id="contentTypeRow">
+      <label>Content type</label>
+      <select id="fContentType" onchange="updateFormatUI()"></select>
+    </div>
+
+    <div class="field hidden" id="linkRow">
+      <label>Link (URL)</label>
+      <input type="url" id="fLink" placeholder="https://...">
+    </div>
+
+    <div class="field hidden" id="fileRow">
+      <label id="fileLabel">Upload file</label>
+      <input type="file" id="fFileInput" onchange="renderExistingFileNote()">
+      <p class="file-note" id="fFileCountNote"></p>
+      <p class="file-note" id="fExistingFileNote"></p>
+    </div>
+
+    <p class="file-note hidden" id="bookNote">This is a physical book — no file or link needed.</p>
+
+    <div class="toggle-row">
+      <span>Past paper</span>
+      <label class="switch"><input type="checkbox" id="fIsPastPaper" onchange="updatePaperFieldsUI()"><span class="slider"></span></label>
+    </div>
+
+    <div class="toggle-row">
+      <span>Latest paper</span>
+      <label class="switch"><input type="checkbox" id="fIsLatestPaper" onchange="updatePaperFieldsUI()"><span class="slider"></span></label>
+    </div>
+    <p class="file-note" style="margin:-8px 0 12px;">Shows this material in the app's "Latest Papers" tile (Browse by type, between Past Papers and Excel Papers).</p>
+
+    <div class="field hidden" id="examBoardRow">
+      <label>Examination board / company</label>
+      <input type="text" id="fExamBoard" list="examBoardList" placeholder="e.g. Wakisha Joint Mock, Wakisso Joint Mock, Excel">
+      <datalist id="examBoardList"></datalist>
+      <p class="file-note">Type the examination board's name. If you've used it before, start typing and pick it from the suggestions so it groups with the same board — otherwise a new board is created automatically. Use "Excel" for our own company's papers so they also show up in the app's Excel Papers section. Shown for both Past paper and Latest paper.</p>
+    </div>
+    <div class="field hidden" id="examYearRow">
+      <label>Exam year</label>
+      <input type="number" id="fExamYear" inputmode="numeric" placeholder="e.g. 2025" min="2000" max="2100">
+    </div>
+
+    <div class="field">
+      <label>Exam classes this applies to (max 5)</label>
+      <div class="ms-field">
+        <button type="button" class="ms-trigger" id="fClassesTrigger" onclick="toggleMsPanel('Classes')">
+          <span id="fClassesTriggerLabel">Select up to 5 classes</span>
+          <svg class="ms-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+        <div class="ms-panel" id="fClassesPanel"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Subjects this applies to (max 5)</label>
+      <div class="ms-field">
+        <button type="button" class="ms-trigger" id="fSubjectsTrigger" onclick="toggleMsPanel('Subjects')">
+          <span id="fSubjectsTriggerLabel">Select up to 5 subjects</span>
+          <svg class="ms-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+        <div class="ms-panel" id="fSubjectsPanel"></div>
+      </div>
+    </div>
+
+    <div class="toggle-row">
+      <span>Mark as "New"</span>
+      <label class="switch"><input type="checkbox" id="fIsNew"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <span>Free item</span>
+      <label class="switch"><input type="checkbox" id="fIsFree" onchange="updatePriceVisibility()"><span class="slider"></span></label>
+    </div>
+    <div class="field" id="priceRow">
+      <label>Price (UGX)</label>
+      <input type="number" id="fPrice" min="0" step="500" placeholder="e.g. 5000">
+    </div>
+    <div class="field" id="pinRow">
+      <label>Unlock PIN</label>
+      <input type="text" id="fPin" inputmode="numeric" maxlength="8" placeholder="e.g. 4821">
+      <p class="file-note">Only visible here, to you. After you manually confirm the student's payment, look this PIN up on the Materials tab and send it to them — they enter it in the app to unlock this material. Leave blank to leave it viewable without a PIN despite the price.</p>
+    </div>
+    <div class="toggle-row">
+      <span>Featured on Home</span>
+      <label class="switch"><input type="checkbox" id="fIsFeatured"><span class="slider"></span></label>
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeItemModal()">Cancel</button>
+      <button class="modal-delete hidden" id="modalDeleteBtn" onclick="deleteCurrentItem()">Move to trash</button>
+      <button class="modal-save" onclick="saveCurrentItem()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SUBJECT MODAL (per-subject: category dropdown + posts) ============ -->
+<div class="modal-overlay" id="subjectModalOverlay" onclick="if(event.target===this) closeSubjectModal()">
+  <div class="modal-card" style="display:flex; flex-direction:column; max-height:90vh;">
+    <h3 id="subjectModalTitle" style="margin-bottom:2px;">Subject</h3>
+    <p class="file-note" style="margin:0 0 14px;">Pick a category, then add or manage posts for this subject.</p>
+
+    <div class="field" style="margin-bottom:6px;">
+      <label>Category</label>
+      <select id="subjectCategorySelect" onchange="onSubjectCategoryChange(this.value)"></select>
+    </div>
+
+    <div class="toolbar" style="margin-bottom:2px;">
+      <h2 style="font-size:14px;" id="subjectCategoryHeading">Past Papers</h2>
+      <button class="btn gold" onclick="addMaterialForSubject()">+ Add</button>
+    </div>
+    <p class="press-hint" style="margin-top:-4px;">Press and hold a post to edit or delete it.</p>
+
+    <div class="item-list" id="subjectItemList" style="overflow-y:auto;"></div>
+    <div class="empty-state hidden" id="subjectItemEmpty"></div>
+
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeSubjectModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CUSTOM CONFIRM DIALOG (replaces native browser confirm()) ============ -->
+<div class="modal-overlay" id="confirmModalOverlay">
+  <div class="modal-card" style="max-width:400px;">
+    <h3 id="confirmModalTitle">Are you sure?</h3>
+    <p id="confirmModalMessage" style="font-size:13px; color:var(--ink-soft); line-height:1.5; margin:-8px 0 0;"></p>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="confirmModalCancelBtn">Cancel</button>
+      <button class="modal-save" id="confirmModalOkBtn" style="background:var(--danger);">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ HELP THREAD MODAL ============ -->
+<div class="modal-overlay" id="helpThreadModalOverlay" onclick="if(event.target===this) closeHelpThreadModal()">
+  <div class="modal-card" style="display:flex; flex-direction:column; max-height:88vh;">
+    <h3 id="helpThreadTitle" style="margin-bottom:2px;">Conversation</h3>
+    <p class="file-note" style="margin:0 0 10px;">Press and hold a message to delete it permanently.</p>
+    <div class="help-msg-list" id="helpThreadMessages"></div>
+    <div class="empty-state hidden" id="helpThreadEmpty" style="padding:24px 10px;">No messages in this conversation yet.</div>
+    <div class="help-input-row">
+      <input type="text" id="helpReplyInput" placeholder="Type your reply…" onkeydown="if(event.key==='Enter'){ event.preventDefault(); sendHelpReply(); }">
+      <button class="btn gold" style="border-radius:100px; padding:11px 16px;" onclick="sendHelpReply()">Send</button>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeHelpThreadModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   CUSTOM CONFIRM DIALOG
+   A drop-in, Promise-based replacement for the native window.confirm(),
+   which browsers render as an unstyled "This page says" popup. Usage:
+     if(!(await customConfirm('Delete this?'))) return;
+   ========================================================================= */
+function customConfirm(message, okLabel='Confirm'){
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('confirmModalOverlay');
+    const okBtn = document.getElementById('confirmModalOkBtn');
+    const cancelBtn = document.getElementById('confirmModalCancelBtn');
+    document.getElementById('confirmModalMessage').textContent = message;
+    okBtn.textContent = okLabel;
+    let settled = false;
+
+    function cleanup(result, fromPop){
+      if(settled) return;
+      settled = true;
+      overlay.classList.remove('show');
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onOverlay);
+      if(!fromPop) popOverlayHistory('confirm');
+      resolve(result);
+    }
+    function onOk(){ cleanup(true); }
+    function onCancel(){ cleanup(false); }
+    function onOverlay(e){ if(e.target === overlay) cleanup(false); }
+
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onOverlay);
+    overlay.classList.add('show');
+    pushOverlayHistory('confirm');
+    // Exposed so the back-button handler can resolve this as a Cancel.
+    activeConfirmCleanup = (fromPop) => cleanup(false, fromPop);
+  });
+}
+let activeConfirmCleanup = null;
+
+/* =========================================================================
+   REFERENCE DATA
+   Mirrors the constants in the customer app so classes/subjects/formats/
+   icons stay consistent between the two.
+   ========================================================================= */
+const CLASSES = ['P.4','P.5','P.6','P.7','S.1','S.2','S.3','S.4','S.5','S.6'];
+// Kept in the exact same order/spelling as SUBJECT_DASHBOARD's ids below —
+// mirrors the customer app one-for-one so a subject picked here always
+// matches a subject tab over there. (Old list had near-misses like "Social
+// Studies" vs "Social Science" that silently broke that matching.)
+const SUBJECTS = ['English','Mathematics','Science','Physics','Chemistry','Biology','Agriculture','Geography','History','Commerce','Economics','ICT','CRE','IRE','Kiswahili','Literature','Social Science','Art Papers','Entrepreneurship','Physical Education','General Paper','French','Music','Technical Drawing','Food Nutrition','English Literature','Subsidiary ICT','Subsidiary Mathematics'];
+const FORMATS = ['pdf','image','book','summary','library','video','pastpapers','latestpapers','excelpapers'];
+
+/* Mirrors TYPE_DASHBOARD in the customer app exactly (same ids, names,
+   icons, gradients) — these ids double as this app's own `format` values,
+   so a material posted under a given type tile here is guaranteed to land
+   in the matching "Browse by type" tile over there. */
+const TYPE_DASHBOARD = [
+  { id:'book',        name:'Books',         icon:'book',      grad:['#16215C','#3A4EA8'] },
+  { id:'summary',      name:'Summaries',     icon:'notes',     grad:['#0E7A5F','#2FBE8F'] },
+  { id:'library',      name:'Library',       icon:'stack',     grad:['#5B3B96','#9067D6'] },
+  { id:'video',        name:'Videos',        icon:'video',     grad:['#B3241F','#EA5A4B'] },
+  { id:'pdf',          name:'PDF',           icon:'pdfdoc',    grad:['#A3201C','#E3A730'] },
+  { id:'image',        name:'Images',        icon:'image',     grad:['#1D5FA3','#4BB4E6'] },
+  { id:'pastpapers',   name:'Past Papers',   icon:'clipboard', grad:['#7A4A12','#D99A3D'] },
+  { id:'latestpapers', name:'Latest Papers', icon:'sparkle',   grad:['#8A5A0E','#F2CE72'] },
+  { id:'excelpapers',  name:'Excel Papers',  icon:'target',    grad:['#0E4A6E','#2FA8C9'] },
+];
+
+/* Mirrors SUBJECT_DASHBOARD in the customer app exactly (same ids, names,
+   icons/text badges, gradients) — this is the same 28-subject tab strip
+   nested inside each "Browse by type" destination over there, now
+   available here too so posting mirrors browsing one-for-one. */
+const SUBJECT_DASHBOARD = [
+  { id:'English',                name:'English',      text:'Eng.',       grad:['#16215C','#3A4EA8'] },
+  { id:'Mathematics',            name:'Maths',        icon:'calculator', grad:['#7A1FA2','#B15FE0'] },
+  { id:'Science',                name:'Science',      icon:'bulb',       grad:['#0E7A5F','#2FBE8F'] },
+  { id:'Physics',                name:'Physics',      icon:'atom',       grad:['#1D5FA3','#4BB4E6'] },
+  { id:'Chemistry',               name:'Chemistry',    icon:'flask',      grad:['#A3201C','#E3A730'] },
+  { id:'Biology',                name:'Biology',      icon:'leaf',       grad:['#0E7A5F','#5FCB9E'] },
+  { id:'Agriculture',            name:'Agriculture',  icon:'sprout',     grad:['#3B6B1E','#7FBE4A'] },
+  { id:'Geography',              name:'Geography',    icon:'globe',      grad:['#0E4A6E','#2FA8C9'] },
+  { id:'History',                name:'History',      icon:'scroll',     grad:['#7A4A12','#D99A3D'] },
+  { id:'Commerce',               name:'Commerce',     icon:'coins',      grad:['#8A5A0E','#F2CE72'] },
+  { id:'Economics',              name:'Economics',    icon:'coins',      grad:['#5B3B96','#9067D6'] },
+  { id:'ICT',                    name:'ICT',          icon:'chip',       grad:['#16215C','#4B5EC9'] },
+  { id:'CRE',                    name:'CRE',          icon:'faith',      grad:['#B3241F','#EA5A4B'] },
+  { id:'IRE',                    name:'IRE',          icon:'faith',      grad:['#0E4A6E','#4BB4E6'] },
+  { id:'Kiswahili',              name:'Kiswahili',    icon:'bubble',     grad:['#7A1FA2','#C77EE8'] },
+  { id:'Literature',             name:'Literature',   icon:'feather',    grad:['#5B3B96','#8A6FD6'] },
+  { id:'Social Science',         name:'Soc. Science', icon:'group',      grad:['#0E4A6E','#3A8FBF'] },
+  { id:'Art Papers',             name:'Art Papers',   icon:'palette',    grad:['#B3241F','#E88A6E'] },
+  { id:'Entrepreneurship',       name:'Entrep.',      icon:'briefcase',  grad:['#7A4A12','#C77E3D'] },
+  { id:'Physical Education',     name:'P.E.',         icon:'trophy',     grad:['#0E7A5F','#3ADB9E'] },
+  { id:'General Paper',          name:'Gen. Paper',   icon:'question',   grad:['#5B3B96','#7A5CC9'] },
+  { id:'French',                 name:'French',       text:'Fr.',        grad:['#1D5FA3','#5FA8E6'] },
+  { id:'Music',                  name:'Music',        icon:'musicnote',  grad:['#8A5A0E','#E0A94F'] },
+  { id:'Technical Drawing',      name:'Tech. Drawing',icon:'ruler',      grad:['#16215C','#5B6EC9'] },
+  { id:'Food Nutrition',         name:'Food & Nutr.', icon:'leaf',       grad:['#2F7A3E','#7FBE6A'] },
+  { id:'English Literature',     name:'Eng. Lit.',    icon:'feather',    grad:['#3B2570','#7A5CC9'] },
+  { id:'Subsidiary ICT',         name:'Sub. ICT',     icon:'chip',       grad:['#16215C','#6C7ED9'] },
+  { id:'Subsidiary Mathematics', name:'Sub. Maths',   icon:'calculator', grad:['#5B1F8A','#B15FE0'] },
+];
+// These three are "category" formats rather than technical file formats:
+// picking one locks in the matching Past paper / Latest paper flag (see
+// syncPaperToggleWithFormat) so the material always shows up in the
+// matching "Browse by type" tile in the student app, and always carries an
+// examination board/company (+ year), same as a manually-toggled past
+// paper. The actual file underneath is still chosen via the Content type
+// row, same pattern as Book/Summary/Library.
+const PAPER_FORMATS = ['pastpapers','latestpapers','excelpapers'];
+
+// Mirrors the customer app: a material only counts/shows as "New" for this
+// many days after newSince was first stamped (see saveCurrentItem below).
+const NEW_BADGE_DAYS = 7;
+function isEffectivelyNew(item){
+  if(!item.isNew) return false;
+  if(!item.newSince) return true;
+  const ageMs = Date.now() - new Date(item.newSince).getTime();
+  return ageMs < NEW_BADGE_DAYS * 24 * 60 * 60 * 1000;
+}
+
+const ICONS = {
+  book:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V4H6.5A2.5 2.5 0 004 6.5v13z"></path></svg>',
+  notes:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><path d="M14 2v6h6M9 13h6M9 17h6"></path></svg>',
+  bulb:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18h6M10 22h4M12 2a6 6 0 00-4 10.5c.6.5 1 1.3 1 2.1V16h6v-1.4c0-.8.4-1.6 1-2.1A6 6 0 0012 2z"></path></svg>',
+  question:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"></circle><path d="M9.1 9a3 3 0 015.8 1c0 2-3 2-3 4M12 17h.01"></path></svg>',
+  paper:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><path d="M14 2v6h6"></path></svg>',
+  video:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"></circle><path d="M10 8.3l6 3.7-6 3.7V8.3z" fill="currentColor" stroke="none"></path></svg>',
+  education:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9l10-5 10 5-10 5-10-5z"></path><path d="M6 11.5V17c0 1.1 2.7 3 6 3s6-1.9 6-3v-5.5"></path><path d="M22 9v6"></path></svg>',
+  /* ---- The following mirror the customer app's ICONS exactly, so the
+     Materials → "By type" and its nested subject tabs render with the
+     same icon set as "Browse by type" / "Browse by subject" in the
+     student app. ---- */
+  group:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8"></path></svg>',
+  clipboard:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="4" width="14" height="18" rx="2"></rect><path d="M9 2h6a1 1 0 011 1v2H8V3a1 1 0 011-1zM9 12h6M9 16h6"></path></svg>',
+  target:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><circle cx="12" cy="12" r="1"></circle></svg>',
+  sparkle:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6z"></path></svg>',
+  stack:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l9 5-9 5-9-5z"></path><path d="M3 12l9 5 9-5M3 17l9 5 9-5"></path></svg>',
+  pdfdoc:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><path d="M14 2v6h6"></path><path d="M12 11v6M9.5 14.5L12 17l2.5-2.5"></path></svg>',
+  image:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>',
+  calculator:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="2" width="14" height="20" rx="2"></rect><path d="M8 6h8M8 11h1M11.5 11h1M15 11h1M8 15h1M11.5 15h1M15 15h1M8 18.5h1M11.5 18.5h1M15 18.5h1"></path></svg>',
+  atom:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"></circle><ellipse cx="12" cy="12" rx="9" ry="3.6"></ellipse><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(60 12 12)"></ellipse><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(120 12 12)"></ellipse></svg>',
+  flask:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 2h6M10 2v6.5L4.5 19a2 2 0 001.8 3h11.4a2 2 0 001.8-3L14 8.5V2"></path><path d="M7.5 15h9"></path></svg>',
+  leaf:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 4C10 4 4 10 4 18v2h2c8 0 14-6 14-14V4z"></path><path d="M20 4C13 8 9 13 6 19"></path></svg>',
+  sprout:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22V12"></path><path d="M12 12C12 7 9 5 4 5c0 5 3 8 8 7z"></path><path d="M12 11C12 7 15 5 20 5c0 5-3 8-8 6z"></path></svg>',
+  globe:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.6 4 6 4 9s-1.5 6.4-4 9c-2.5-2.6-4-6-4-9s1.5-6.4 4-9z"></path></svg>',
+  scroll:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v13a3 3 0 01-3 3H8a3 3 0 01-3-3V6a2 2 0 012-2z"></path><path d="M6 4a2 2 0 00-2 2v11a2 2 0 002 2M9 9h6M9 13h6"></path></svg>',
+  coins:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="9" cy="7" rx="6" ry="3"></ellipse><path d="M3 7v5c0 1.7 2.7 3 6 3s6-1.3 6-3V7"></path><path d="M3 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"></path><path d="M15 9.3c2.8.3 6 1.4 6 3.2v5c0 1.7-2.7 3-6 3-1.2 0-2.4-.2-3.3-.5"></path></svg>',
+  chip:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="7" width="10" height="10" rx="1.5"></rect><path d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3M3 9h3M3 12h3M3 15h3M18 9h3M18 12h3M18 15h3"></path></svg>',
+  faith:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M6 8h12"></path><path d="M12 21c-3-3-5-6-5-9a5 5 0 0110 0c0 3-2 6-5 9z"></path></svg>',
+  bubble:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 01-11.3 7.3L4 21l1.5-4.5A8 8 0 1121 12z"></path><path d="M8 10h8M8 13h5"></path></svg>',
+  feather:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 4C10 4 4 12 4 20h2c1-3 3-5 5-6M9 15l9-9M4 20l4-2"></path></svg>',
+  palette:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a10 10 0 000 20c1.4 0 2-1 2-2 0-.6-.3-1-.6-1.4-.3-.4-.6-.8-.6-1.4 0-1 .8-1.7 1.8-1.7H16a4 4 0 004-4c0-5-3.6-9.5-8-9.5z"></path><circle cx="7.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"></circle><circle cx="8.5" cy="15" r="1.2" fill="currentColor" stroke="none"></circle><circle cx="14" cy="7.5" r="1.2" fill="currentColor" stroke="none"></circle><circle cx="17" cy="11.5" r="1.2" fill="currentColor" stroke="none"></circle></svg>',
+  briefcase:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M3 12h18"></path></svg>',
+  trophy:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3h8v6a4 4 0 01-8 0V3z"></path><path d="M8 4H5a3 3 0 003 5.5M16 4h3a3 3 0 01-3 5.5M10 15v3M14 15v3M8 21h8"></path></svg>',
+  musicnote:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l11-2v13"></path><circle cx="6.5" cy="18" r="2.5"></circle><circle cx="17.5" cy="16" r="2.5"></circle></svg>',
+  ruler:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="8" width="19" height="8" rx="1.5" transform="rotate(-15 12 12)"></rect><path d="M8.3 9.7l.8 2M11 8.9l.8 2M13.7 8.1l.8 2M16.4 7.3l.8 2"></path></svg>',
+};
+
+/* =========================================================================
+   STATE
+   ========================================================================= */
+let catalog = {};         // raw {id: item} from Supabase
+let editingId = null;     // id of item currently open in the modal, or null for "new"
+let viewingTrash = false; // false = active materials list, true = trash view
+let existingFileUrl = null; // uploaded-file URL already on the item being edited (file inputs can't be pre-filled)
+let existingImageUrls = [];  // uploaded image URLs already on the item being edited, when contentType is 'image' (can be more than one)
+const MAX_IMAGE_FILES = 5;   // max images that can be uploaded at once for an 'image' material
+let longPressTimer = null;
+let longPressFiredFor = null; // id whose long-press already fired, to swallow the trailing click
+let analyticsRows = [];   // raw analytics_events rows from Supabase (last 90 days)
+let analyticsPeriod = 'today'; // 'today' | '7' | '30' | 'all'
+let appSettings = { logo_url:'', description:'', motto:'' }; // shared branding (logo/description/motto), applied in both apps
+let pendingLogoFile = null; // logo file picked in Settings, not yet uploaded/saved
+const MATERIALS_PREVIEW_COUNT = 5; // materials list only shows this many until "See all" is tapped
+let materialsExpanded = false;
+let materialsMode = 'subject'; // 'subject' (4-col subject grid) | 'type' (Browse-by-type + nested subject tabs) | 'all' (flat list) — Materials tab sub-view
+let activeSubject = null;      // subject currently open in the Subject modal
+let activeSubjectCategory = 'pastpapers'; // category currently selected inside the Subject modal
+let activeType = null;         // type id currently open in the By-type detail view
+let activeTypeSubject = 'all'; // subject tab currently selected within that type ('all' or a SUBJECT_DASHBOARD id)
+// Mirrors the customer app's format vocabulary, narrowed to the five
+// categories an admin actually posts per-subject content into.
+const SUBJECT_CATEGORIES = [
+  { value:'pastpapers',  label:'Past Papers' },
+  { value:'latestpapers', label:'Latest Papers' },
+  { value:'summary',     label:'Summary' },
+  { value:'library',     label:'Notes' },
+  { value:'video',       label:'Videos' },
+];
+let notifications = []; // raw rows from the `notifications` table, newest first
+const ITEM_DRAFT_KEY = 'excelAdmin_itemDraft'; // autosaved Add/Edit Material form fields, for crash recovery
+let itemDraftSaveTimer = null;
+
+// Used everywhere a Supabase/network call can fail. Shows the *actual*
+// error message from Supabase (RLS violation, missing column, bad value,
+// etc.) instead of a blanket "check your connection" — that phrase used to
+// be shown even when the real cause had nothing to do with the network,
+// which made it impossible to tell what had actually gone wrong.
+function errorToast(action, err){
+  console.error(err);
+  let message = (err && err.message) || (err && err.error_description) || (err && err.details);
+  if(!message){
+    try { message = (typeof err === 'string') ? err : JSON.stringify(err); } catch(e){ message = null; }
+  }
+  showToast(`${action}: ${message || 'Unknown error'}`);
+}
+
+/* =========================================================================
+   RENDERING
+   ========================================================================= */
+// New materials should appear at the top of the list in both apps (which
+// both sort ascending by `order`), so a brand-new item gets an order lower
+// than every existing active item — one below the current lowest.
+function getNewItemOrder(){
+  const orders = activeItems().map(i => i.order ?? 0);
+  return orders.length ? Math.min(...orders) - 1 : 0;
+}
+
+function sortedItems(){
+  return Object.keys(catalog)
+    .map(id => ({ id, ...catalog[id] }))
+    .sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
+}
+
+function activeItems(){
+  return sortedItems().filter(i => !i.deleted);
+}
+
+function trashedItems(){
+  return sortedItems().filter(i => i.deleted);
+}
+
+function toggleTrashView(){
+  viewingTrash = !viewingTrash;
+  renderDashboard();
+}
+
+/* =========================================================================
+   BOTTOM NAV / TAB SWITCHING
+   The dashboard is now split into four full-page views (Home, Materials,
+   Notifications, Settings) toggled by the bottom nav bar instead of a
+   Settings button + modal living in the top bar.
+   ========================================================================= */
+let currentAdminTab = 'home';
+
+/* =========================================================================
+   OVERLAY HISTORY STACK + BACK BUTTON
+   Mirrors the customer app: the hardware/gesture back button closes
+   whichever modal/dialog is open before it steps back through previously
+   visited admin tabs, and only exits once there's nothing left.
+   ========================================================================= */
+let overlayStack = [];
+let suppressPopCount = 0;
+
+function pushOverlayHistory(id){
+  overlayStack.push(id);
+  history.pushState({ overlay:id, tab: currentAdminTab }, '', location.hash || ('#'+currentAdminTab));
+}
+
+function popOverlayHistory(id){
+  const idx = overlayStack.lastIndexOf(id);
+  if(idx === -1) return;
+  overlayStack.splice(idx, 1);
+  if(history.state && history.state.overlay === id){
+    suppressPopCount++;
+    history.back();
+  }
+}
+
+function initBackButton(){
+  if(!history.state){
+    history.replaceState({tab: currentAdminTab}, '', '#'+currentAdminTab);
+  }
+  window.addEventListener('popstate', (e)=>{
+    if(suppressPopCount > 0){ suppressPopCount--; return; }
+    if(overlayStack.length){
+      const id = overlayStack.pop();
+      if(id === 'item') hideItemModal();
+      else if(id === 'confirm' && activeConfirmCleanup) activeConfirmCleanup(true);
+      else if(id === 'helpThread') hideHelpThreadModal();
+      else if(id === 'subject') hideSubjectModal();
+      return;
+    }
+    const tab = (e.state && e.state.tab) || 'home';
+    showAdminTab(tab, {fromPop:true});
+  });
+}
+
+function showAdminTab(tab, opts={}){
+  const prevTab = currentAdminTab;
+  currentAdminTab = tab;
+  document.querySelectorAll('.admin-view').forEach(el => el.classList.add('hidden'));
+  document.getElementById('view-' + tab).classList.remove('hidden');
+  document.querySelectorAll('#adminBottomNav .nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+
+  if(tab === 'settings') populateSettingsView();
+  if(tab === 'notifications') renderNotifications();
+  if(tab === 'help') renderHelpConversations();
+  if(tab === 'materials') renderSubjectGrid();
+
+  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+
+  if(!opts.fromPop && prevTab !== tab){
+    history.pushState({tab}, '', '#'+tab);
+  }
+}
+
+/* =========================================================================
+   SETTINGS VIEW (Trash lives here instead of the main toolbar)
+   ========================================================================= */
+function populateSettingsView(){
+  const n = trashedItems().length;
+  document.getElementById('settingsTrashBtn').textContent = `🗑 Trash${n ? ' (' + n + ')' : ''}`;
+
+  pendingLogoFile = null;
+  document.getElementById('fLogoFile').value = '';
+  document.getElementById('fAppDescription').value = appSettings.description || '';
+  document.getElementById('fAppMotto').value = appSettings.motto || '';
+  document.getElementById('fWhatsappNumber').value = appSettings.whatsapp_number || '';
+  document.getElementById('fSupportEmail').value = appSettings.support_email || '';
+  renderLogoPreview(appSettings.logo_url || '');
+}
+
+function openTrashFromSettings(){
+  showAdminTab('materials');
+  setMaterialsMode('all', document.querySelector('#materialsModeToggle button[data-mode="all"]'));
+  if(!viewingTrash) toggleTrashView();
+}
+
+/* =========================================================================
+   BRANDING (app logo / description / motto — Settings view)
+   Applied everywhere in both apps: brand marks here and in the customer
+   app, plus the About description and motto/tagline text there.
+   ========================================================================= */
+function renderLogoPreview(url){
+  const el = document.getElementById('logoPreview');
+  el.innerHTML = url ? `<img src="${url}" alt="Logo">` : 'EX';
+}
+
+function previewLogoFile(){
+  const input = document.getElementById('fLogoFile');
+  pendingLogoFile = input.files && input.files[0] ? input.files[0] : null;
+  if(pendingLogoFile){
+    const reader = new FileReader();
+    reader.onload = e => renderLogoPreview(e.target.result);
+    reader.readAsDataURL(pendingLogoFile);
+  } else {
+    renderLogoPreview(appSettings.logo_url || '');
+  }
+}
+
+async function saveBranding(){
+  const description = document.getElementById('fAppDescription').value.trim();
+  const motto = document.getElementById('fAppMotto').value.trim();
+  const whatsapp_number = document.getElementById('fWhatsappNumber').value.trim().replace(/[^0-9]/g, '');
+  const support_email = document.getElementById('fSupportEmail').value.trim();
+
+  let logo_url = appSettings.logo_url || '';
+  try{
+    if(pendingLogoFile){
+      showToast('Uploading logo…');
+      logo_url = await window.ExcelAdmin.uploadFile(pendingLogoFile, 'branding');
+    }
+    await window.ExcelAdmin.saveSettings({ logo_url, description, motto, whatsapp_number, support_email });
+    pendingLogoFile = null;
+    showToast('Settings saved');
+  } catch(err){
+    errorToast('Save failed', err);
+  }
+}
+
+function applyBranding(){
+  const url = appSettings.logo_url || '';
+  const el = document.getElementById('brandMarkDashboard');
+  if(el) el.innerHTML = url ? `<img src="${url}" alt="Logo">` : 'EX';
+}
+
+function renderDashboard(){
+  populateExamBoardList();
+  renderSubjectGrid();
+  if(document.getElementById('subjectModalOverlay').classList.contains('show')){
+    renderSubjectItemList();
+  }
+  renderTypeGrid();
+  if(activeType && !document.getElementById('typeDetailWrap').classList.contains('hidden')){
+    renderTypeDetail();
+  }
+  const all = sortedItems();
+  document.getElementById('statTotal').textContent = all.filter(i=>!i.deleted).length;
+  document.getElementById('statFree').textContent = all.filter(i=>!i.deleted && i.isFree).length;
+  // "Paid items" = every material that has payment attached (not free),
+  // regardless of whether anyone has unlocked it yet.
+  document.getElementById('statPaidItems').textContent = all.filter(i=>!i.deleted && !i.isFree).length;
+  renderPaidOpenStat();
+
+  const list = document.getElementById('itemList');
+  const empty = document.getElementById('emptyState');
+  const listTitle = document.getElementById('listTitle');
+  const listHint = document.getElementById('listHint');
+  const trashBtn = document.getElementById('trashToggleBtn');
+  const addBtn = document.getElementById('addMaterialBtn');
+
+  if(viewingTrash){
+    const trashed = trashedItems();
+    listTitle.textContent = `Trash (${trashed.length})`;
+    listHint.textContent = 'Restore an item, or delete it permanently — permanent deletes cannot be undone.';
+    trashBtn.textContent = '← Back to catalog';
+    trashBtn.classList.remove('hidden');
+    addBtn.classList.add('hidden');
+
+    if(!trashed.length){
+      list.innerHTML = '';
+      empty.textContent = 'Trash is empty.';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+
+    list.innerHTML = trashed.map(item => `
+      <div class="item-row trashed">
+        <div class="item-icon">${ICONS[item.icon] || ICONS.book}</div>
+        <div class="item-body">
+          <p class="name">${escapeHtml(item.name || 'Untitled')}</p>
+          <p class="desc">${escapeHtml(item.desc || '')}</p>
+          <div class="item-flags"><span class="flag order">Deleted</span></div>
+        </div>
+        <div class="item-actions">
+          <button class="icon-btn" title="Restore" onclick="restoreItem('${item.id}')">↺</button>
+          <button class="icon-btn danger" title="Delete permanently" onclick="permanentlyDeleteItem('${item.id}')">🗑</button>
+        </div>
+      </div>
+    `).join('');
+    return;
+  }
+
+  const items = activeItems();
+  listTitle.textContent = 'Materials';
+  listHint.textContent = 'Press and hold a material to edit or delete it. Type a number under a material to move it to that position.';
+  trashBtn.classList.add('hidden');
+  addBtn.classList.remove('hidden');
+
+  if(!items.length){
+    list.innerHTML = '';
+    empty.textContent = 'No materials yet. Click "+ Add material" to create your first one.';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  const visible = materialsExpanded ? items : items.slice(0, MATERIALS_PREVIEW_COUNT);
+
+  const rowsHtml = visible.map((item, idx) => `
+    <div class="item-row"
+         onmousedown="startLongPress('${item.id}')" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()"
+         ontouchstart="startLongPress('${item.id}')" ontouchend="cancelLongPress()" ontouchcancel="cancelLongPress()"
+         oncontextmenu="event.preventDefault(); return false;">
+      <div class="item-icon">${ICONS[item.icon] || ICONS.book}</div>
+      <div class="item-body">
+        <p class="name">${escapeHtml(item.name || 'Untitled')}</p>
+        <p class="desc">${escapeHtml(item.desc || '')}</p>
+        <div class="item-flags">
+          ${isEffectivelyNew(item) ? '<span class="flag new">New</span>' : ''}
+          ${item.isFree ? '<span class="flag free">Free</span>' : (item.price ? `<span class="flag order">UGX ${Number(item.price).toLocaleString('en-UG')}</span>` : '')}
+          ${(!item.isFree && item.pin) ? `<span class="flag pin">🔑 PIN ${escapeHtml(item.pin)}</span>` : ''}
+          ${(!item.isFree && !item.pin) ? `<span class="flag order">No PIN — unlocked</span>` : ''}
+          ${item.isFeatured ? '<span class="flag featured">Featured</span>' : ''}
+          ${(item.isPastPaper || item.isLatestPaper) ? `<span class="flag order">📄 ${escapeHtml(item.examBoard || '')}${item.examYear ? ' · ' + item.examYear : ''}</span>` : ''}
+          <span class="flag order">${FORMAT_LABELS[item.format] || 'PDF'}</span>
+        </div>
+      </div>
+      <div class="item-actions">
+        <div class="pos-field">
+          <span class="pos-label">Position</span>
+          <input class="pos-input" type="number" min="1" max="${items.length}" value="${idx+1}"
+                 onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()"
+                 onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter') this.blur()"
+                 onchange="setItemPosition('${item.id}', this.value)">
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  const seeAllHtml = items.length > MATERIALS_PREVIEW_COUNT
+    ? `<button class="btn ghost see-all-btn" onclick="toggleMaterialsExpanded()">${materialsExpanded ? 'Show less' : `See all (${items.length})`}</button>`
+    : '';
+
+  list.innerHTML = rowsHtml + seeAllHtml;
+}
+
+function toggleMaterialsExpanded(){
+  materialsExpanded = !materialsExpanded;
+  renderDashboard();
+}
+
+/* =========================================================================
+   MATERIALS TAB — BY SUBJECT (4-column grid → per-subject posting)
+   Tapping a subject tile opens a page scoped to that subject with a
+   category dropdown (Past Papers / Latest Papers / Summary / Notes /
+   Videos), mirroring the format vocabulary already used everywhere else in
+   this file and in the customer app.
+   ========================================================================= */
+function setMaterialsMode(mode, btn){
+  materialsMode = mode;
+  document.querySelectorAll('#materialsModeToggle button').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('subjectGridWrap').classList.toggle('hidden', mode !== 'subject');
+  document.getElementById('typeGridWrap').classList.toggle('hidden', mode !== 'type');
+  document.getElementById('typeDetailWrap').classList.add('hidden'); // always land on the type grid first, not mid-drill-down
+  document.getElementById('allMaterialsWrap').classList.toggle('hidden', mode !== 'all');
+  if(mode === 'subject') renderSubjectGrid();
+  if(mode === 'type'){ activeType = null; renderTypeGrid(); }
+}
+
+/* A material's "effective" format — the single value driving which
+   TYPE_DASHBOARD tile it belongs to in both apps. Falls back to the first
+   entry of the legacy `formats` array for materials saved before the
+   singular `format` field existed. */
+function effectiveFormat(item){
+  return item.format || (Array.isArray(item.formats) && item.formats[0]) || null;
+}
+
+function renderTypeGrid(){
+  const grid = document.getElementById('typeGrid');
+  if(!grid) return;
+  const items = activeItems();
+  grid.innerHTML = TYPE_DASHBOARD.map((t, i) => {
+    const count = items.filter(it => effectiveFormat(it) === t.id).length;
+    return `
+      <button type="button" class="dtype-tile" style="--tile-a:${t.grad[0]}; --tile-b:${t.grad[1]}; animation-delay:${i*45}ms;" onclick="openTypeDetail('${t.id}')">
+        <div class="ic">${ICONS[t.icon] || ICONS.book}</div>
+        <p class="nm">${t.name}</p>
+        <p class="cnt">${count} item${count===1?'':'s'}</p>
+      </button>`;
+  }).join('');
+}
+
+function openTypeDetail(typeId){
+  activeType = typeId;
+  activeTypeSubject = 'all';
+  document.getElementById('typeGridWrap').classList.add('hidden');
+  document.getElementById('typeDetailWrap').classList.remove('hidden');
+  renderTypeDetail();
+}
+
+function closeTypeDetail(){
+  activeType = null;
+  document.getElementById('typeDetailWrap').classList.add('hidden');
+  document.getElementById('typeGridWrap').classList.remove('hidden');
+  renderTypeGrid();
+}
+
+function setTypeSubject(subjectId){
+  activeTypeSubject = subjectId;
+  renderTypeDetail();
+}
+
+/* Builds the "All subjects" tab plus one tab per SUBJECT_DASHBOARD entry,
+   scoped to `items` (already filtered to the active type) for counts —
+   same shape as subjectTabsHTML() in the student app. */
+function typeSubjectTabsHTML(items, activeId){
+  const counts = {};
+  items.forEach(it => (it.subjects||[]).forEach(s => { counts[s] = (counts[s]||0) + 1; }));
+  const allTab = `
+    <div class="dsubj-tile${activeId==='all' ? ' active' : ''}" style="--tile-a:var(--navy-800); --tile-b:var(--navy-700);" onclick="setTypeSubject('all')">
+      <div class="ic"><span class="txt">All</span></div>
+      <p class="nm">All subjects</p>
+      <p class="cnt">${items.length}</p>
+    </div>`;
+  return allTab + SUBJECT_DASHBOARD.map((s, i) => `
+    <div class="dsubj-tile${activeId===s.id ? ' active' : ''}" style="--tile-a:${s.grad[0]}; --tile-b:${s.grad[1]}; animation-delay:${i*20}ms;" onclick="setTypeSubject('${s.id.replace(/'/g,"\\'")}')">
+      <div class="ic">${s.text ? `<span class="txt">${s.text}</span>` : (ICONS[s.icon] || ICONS.book)}</div>
+      <p class="nm">${s.name}</p>
+      <p class="cnt">${counts[s.id] || 0}</p>
+    </div>`).join('');
+}
+
+function renderTypeDetail(){
+  if(!activeType) return;
+  const t = TYPE_DASHBOARD.find(x => x.id === activeType);
+  const allItems = activeItems().filter(it => effectiveFormat(it) === activeType);
+  const items = activeTypeSubject === 'all' ? allItems : allItems.filter(it => (it.subjects||[]).includes(activeTypeSubject));
+
+  document.getElementById('typeDetailTitle').textContent = t ? t.name : activeType;
+  document.getElementById('typeDetailSubtitle').textContent =
+    `${items.length} item${items.length===1?'':'s'}` + (activeTypeSubject==='all' ? ' · all subjects' : ' · ' + activeTypeSubject);
+  document.getElementById('typeDetailSubjectTabs').innerHTML = typeSubjectTabsHTML(allItems, activeTypeSubject);
+
+  const list = document.getElementById('typeDetailItemList');
+  const empty = document.getElementById('typeDetailEmpty');
+  if(!items.length){
+    list.innerHTML = '';
+    empty.textContent = `No ${(t ? t.name.toLowerCase() : 'materials')} yet` + (activeTypeSubject==='all' ? '' : ` for ${activeTypeSubject}`) + `. Tap "+ Add" to create one.`;
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  list.innerHTML = items.map(item => `
+    <div class="item-row"
+         onmousedown="startLongPress('${item.id}')" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()"
+         ontouchstart="startLongPress('${item.id}')" ontouchend="cancelLongPress()" ontouchcancel="cancelLongPress()"
+         oncontextmenu="event.preventDefault(); return false;">
+      <div class="item-icon">${ICONS[item.icon] || ICONS.book}</div>
+      <div class="item-body">
+        <p class="name">${escapeHtml(item.name || 'Untitled')}</p>
+        <p class="desc">${escapeHtml(item.desc || '')}</p>
+        <div class="item-flags">
+          ${isEffectivelyNew(item) ? '<span class="flag new">New</span>' : ''}
+          ${item.isFree ? '<span class="flag free">Free</span>' : (item.price ? `<span class="flag order">UGX ${Number(item.price).toLocaleString('en-UG')}</span>` : '')}
+          ${(!item.isFree && item.pin) ? `<span class="flag pin">🔑 PIN ${escapeHtml(item.pin)}</span>` : ''}
+          ${(item.isPastPaper || item.isLatestPaper) ? `<span class="flag order">📄 ${escapeHtml(item.examBoard || '')}${item.examYear ? ' · ' + item.examYear : ''}</span>` : ''}
+          ${item.isFeatured ? '<span class="flag featured">Featured</span>' : ''}
+          ${(activeTypeSubject==='all' && Array.isArray(item.subjects) && item.subjects.length) ? `<span class="flag">${escapeHtml(item.subjects.join(', '))}</span>` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* Seeds a brand-new item straight into the type tile (and, if one is
+   selected, the subject tab) currently open — exactly like
+   addMaterialForSubject() does for the "By subject" grid. */
+function addMaterialForType(){
+  if(!activeType) return;
+  const presets = { format: activeType };
+  if(activeTypeSubject !== 'all') presets.subject = activeTypeSubject;
+  openItemModal(null, presets);
+}
+
+function subjectInitials(name){
+  return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+}
+
+function renderSubjectGrid(){
+  const grid = document.getElementById('subjectGrid');
+  if(!grid) return;
+  const items = activeItems();
+  grid.innerHTML = SUBJECTS.map(s => {
+    const count = items.filter(i => Array.isArray(i.subjects) && i.subjects.includes(s)).length;
+    // Look up this subject's exact icon/text badge + gradient from
+    // SUBJECT_DASHBOARD, the same table the student app's "Browse by
+    // subject" strip uses — so every tile here matches one-for-one.
+    const meta = SUBJECT_DASHBOARD.find(d => d.id === s);
+    const icoInner = meta
+      ? (meta.text ? `<span class="txt">${meta.text}</span>` : (ICONS[meta.icon] || ICONS.book))
+      : `<span class="txt">${subjectInitials(s)}</span>`;
+    const gradStyle = meta ? ` style="--tile-a:${meta.grad[0]}; --tile-b:${meta.grad[1]};"` : '';
+    return `
+      <button type="button" class="subject-tile" onclick="openSubjectView('${s.replace(/'/g, "\\'")}')">
+        ${count ? `<span class="subject-tile-count">${count}</span>` : ''}
+        <span class="subject-tile-ico"${gradStyle}>${icoInner}</span>
+        <span class="subject-tile-lbl">${escapeHtml(s)}</span>
+      </button>`;
+  }).join('');
+}
+
+function openSubjectView(subject){
+  activeSubject = subject;
+  document.getElementById('subjectModalTitle').textContent = subject;
+
+  const sel = document.getElementById('subjectCategorySelect');
+  if(!sel.dataset.populated){
+    sel.innerHTML = SUBJECT_CATEGORIES.map(c => `<option value="${c.value}">${c.label}</option>`).join('');
+    sel.dataset.populated = 'true';
+  }
+  sel.value = activeSubjectCategory;
+
+  renderSubjectItemList();
+  document.getElementById('subjectModalOverlay').classList.add('show');
+  pushOverlayHistory('subject');
+}
+
+function hideSubjectModal(){
+  document.getElementById('subjectModalOverlay').classList.remove('show');
+}
+
+function closeSubjectModal(){
+  hideSubjectModal();
+  popOverlayHistory('subject');
+}
+
+function onSubjectCategoryChange(val){
+  activeSubjectCategory = val;
+  renderSubjectItemList();
+}
+
+function renderSubjectItemList(){
+  const list = document.getElementById('subjectItemList');
+  const empty = document.getElementById('subjectItemEmpty');
+  const heading = document.getElementById('subjectCategoryHeading');
+  if(!list || !empty || !activeSubject) return;
+
+  const catLabel = (SUBJECT_CATEGORIES.find(c => c.value === activeSubjectCategory) || {}).label || '';
+  heading.textContent = catLabel;
+
+  const items = activeItems().filter(i =>
+    Array.isArray(i.subjects) && i.subjects.includes(activeSubject) && i.format === activeSubjectCategory
+  );
+
+  if(!items.length){
+    list.innerHTML = '';
+    empty.textContent = `No ${catLabel.toLowerCase()} yet for ${activeSubject}. Tap "+ Add" to create one.`;
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  list.innerHTML = items.map(item => `
+    <div class="item-row"
+         onmousedown="startLongPress('${item.id}')" onmouseup="cancelLongPress()" onmouseleave="cancelLongPress()"
+         ontouchstart="startLongPress('${item.id}')" ontouchend="cancelLongPress()" ontouchcancel="cancelLongPress()"
+         oncontextmenu="event.preventDefault(); return false;">
+      <div class="item-icon">${ICONS[item.icon] || ICONS.book}</div>
+      <div class="item-body">
+        <p class="name">${escapeHtml(item.name || 'Untitled')}</p>
+        <p class="desc">${escapeHtml(item.desc || '')}</p>
+        <div class="item-flags">
+          ${isEffectivelyNew(item) ? '<span class="flag new">New</span>' : ''}
+          ${item.isFree ? '<span class="flag free">Free</span>' : (item.price ? `<span class="flag order">UGX ${Number(item.price).toLocaleString('en-UG')}</span>` : '')}
+          ${(!item.isFree && item.pin) ? `<span class="flag pin">🔑 PIN ${escapeHtml(item.pin)}</span>` : ''}
+          ${(item.isPastPaper || item.isLatestPaper) ? `<span class="flag order">📄 ${escapeHtml(item.examBoard || '')}${item.examYear ? ' · ' + item.examYear : ''}</span>` : ''}
+          ${item.isFeatured ? '<span class="flag featured">Featured</span>' : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addMaterialForSubject(){
+  if(!activeSubject) return;
+  openItemModal(null, { subject: activeSubject, format: activeSubjectCategory });
+}
+
+/* =========================================================================
+   LONG-PRESS TO EDIT
+   Since the explicit edit icon was removed, press-and-hold a material row
+   to open it for editing (the Edit modal itself offers "Move to trash").
+   ========================================================================= */
+const LONG_PRESS_MS = 500;
+
+function startLongPress(id){
+  cancelLongPress();
+  longPressTimer = setTimeout(() => {
+    longPressFiredFor = id;
+    openItemModal(id);
+  }, LONG_PRESS_MS);
+}
+
+function cancelLongPress(){
+  clearTimeout(longPressTimer);
+  longPressTimer = null;
+}
+
+function escapeHtml(str){
+  return String(str ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[c]));
+}
+
+/* =========================================================================
+   ANALYTICS
+   ========================================================================= */
+function setAnalyticsPeriod(period, btn){
+  analyticsPeriod = period;
+  document.querySelectorAll('#periodToggle button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAnalytics();
+}
+
+function todayStr(){
+  return new Date().toISOString().slice(0,10);
+}
+
+function rowsForPeriod(){
+  if(analyticsPeriod === 'all') return analyticsRows;
+  if(analyticsPeriod === 'today') return analyticsRows.filter(r => r.event_date === todayStr());
+  const days = Number(analyticsPeriod);
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - (days - 1));
+  const cutoffStr = cutoff.toISOString().slice(0,10);
+  return analyticsRows.filter(r => r.event_date >= cutoffStr);
+}
+
+/* Counts occurrences of `value` for a given event_type within `rows`,
+   returning entries sorted highest-first: [{ name, count }, ...] */
+function rankCounts(rows, eventType){
+  const counts = {};
+  rows.forEach(r => {
+    if(r.event_type !== eventType || !r.value) return;
+    counts[r.value] = (counts[r.value] || 0) + 1;
+  });
+  return Object.entries(counts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a,b) => b.count - a.count);
+}
+
+function renderRankList(containerId, ranked, limit = 8){
+  const el = document.getElementById(containerId);
+  if(!ranked.length){
+    el.innerHTML = '<p class="rank-empty">No activity yet for this period.</p>';
+    return;
+  }
+  const max = ranked[0].count;
+  el.innerHTML = ranked.slice(0, limit).map((r, i) => `
+    <div class="rank-row">
+      <span class="pos">#${i+1}</span>
+      <span class="nm">${escapeHtml(r.name)}</span>
+      <span class="bar-wrap"><span class="bar" style="width:${Math.max(6, Math.round(r.count/max*100))}%"></span></span>
+      <span class="cnt">${r.count}</span>
+    </div>`).join('');
+}
+
+// "Paid open" = how many times a paid material has actually been opened —
+// i.e. successfully unlocked by a student's correct PIN. The customer app
+// logs an 'unlock' analytics event (value = material id) the first time a
+// student unlocks each paid item — see the ANALYTICS SETUP notes near the
+// top of this file. This total is all-time (within the retained analytics
+// window), independent of the period toggle used for "App activity" below.
+function renderPaidOpenStat(){
+  const el = document.getElementById('statPaidOpen');
+  if(!el) return;
+  el.textContent = analyticsRows.filter(r => r.event_type === 'unlock').length;
+}
+
+function renderAnalytics(){
+  renderPaidOpenStat();
+  const rows = rowsForPeriod();
+
+  const visitLabel = { today:'Visits today', '7':'Visits (7 days)', '30':'Visits (30 days)', all:'Visits (all time)' }[analyticsPeriod];
+  document.getElementById('statVisitsLbl').textContent = visitLabel;
+  document.getElementById('statVisits').textContent = rows.filter(r => r.event_type === 'visit').length;
+
+  const subjectRanked = rankCounts(rows, 'subject');
+  const classRanked = rankCounts(rows, 'class');
+
+  document.getElementById('statClassClicks').textContent = classRanked.reduce((s,r)=>s+r.count, 0);
+
+  renderRankList('subjectRankList', subjectRanked, 5);
+  renderRankList('classRankList', classRanked);
+}
+
+/* =========================================================================
+   REORDERING (typed position — admin types the target position number and
+   the material moves there; order is a plain index shared by both apps)
+   ========================================================================= */
+async function setItemPosition(id, rawPos){
+  const items = activeItems();
+  const from = items.findIndex(i => i.id === id);
+  if(from === -1) return;
+
+  let to = Math.round(Number(rawPos)) - 1;
+  if(Number.isNaN(to)){
+    renderDashboard(); // reset the input back to its current value
+    return;
+  }
+  to = Math.max(0, Math.min(items.length - 1, to));
+
+  if(to === from){
+    renderDashboard();
+    return;
+  }
+
+  const reordered = items.slice();
+  const [moved] = reordered.splice(from, 1);
+  reordered.splice(to, 0, moved);
+
+  // Only write rows whose order value actually changed.
+  const changed = reordered
+    .map((item, idx) => ({ item, idx }))
+    .filter(({ item, idx }) => (item.order ?? 0) !== idx);
+
+  try{
+    await Promise.all(changed.map(({ item, idx }) =>
+      window.ExcelAdmin.saveItem(item.id, { ...catalog[item.id], order: idx })
+    ));
+    showToast('Order updated');
+  } catch(err){
+    errorToast('Reorder failed', err);
+  }
+}
+
+/* =========================================================================
+   MODAL (ADD / EDIT)
+   ========================================================================= */
+const FORMAT_LABELS = {
+  pdf:'PDF', image:'Image', book:'Book (physical)', summary:'Summary', library:'Library', video:'Video',
+  pastpapers:'Past Papers', latestpapers:'Latest Papers', excelpapers:'Excel Papers',
+};
+const CONTENT_TYPE_LABELS = { link:'Link (URL)', pdf:'PDF file', book:'Book (physical, no file)', image:'Image file' };
+const CONTENT_TYPES_FOR_MULTI = ['link', 'pdf', 'book', 'image']; // options offered for 'summary' and 'library'
+const CONTENT_TYPES_FOR_PAPERS = ['pdf', 'image', 'link']; // Past/Latest/Excel Papers are never a physical book
+
+function populateFormOptions(){
+  const iconSel = document.getElementById('fIcon');
+  iconSel.innerHTML = Object.keys(ICONS).map(k => `<option value="${k}">${k}</option>`).join('');
+
+  document.getElementById('fFormat').innerHTML = FORMATS.map(f =>
+    `<option value="${f}">${FORMAT_LABELS[f] || f}</option>`
+  ).join('');
+
+  document.getElementById('fContentType').innerHTML = CONTENT_TYPES_FOR_MULTI.map(c =>
+    `<option value="${c}">${CONTENT_TYPE_LABELS[c]}</option>`
+  ).join('');
+
+  populateMsOptions('Classes', CLASSES);
+  populateMsOptions('Subjects', SUBJECTS);
+}
+
+const MAX_TAG_SELECT = 5; // max classes / subjects an admin can pick per material
+
+function populateMsOptions(key, values){
+  const panel = document.getElementById('f'+key+'Panel');
+  panel.innerHTML = values.map(v => `
+    <label class="ms-option" data-val="${v}">
+      <input type="checkbox" value="${v}" onchange="onMsOptionChange('${key}', this)">
+      <span>${v}</span>
+    </label>`).join('');
+}
+
+function toggleMsPanel(key){
+  const panel = document.getElementById('f'+key+'Panel');
+  const trigger = document.getElementById('f'+key+'Trigger');
+  const isOpen = panel.classList.contains('open');
+  document.querySelectorAll('.ms-panel.open').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.ms-trigger.open').forEach(t => t.classList.remove('open'));
+  if(!isOpen){
+    panel.classList.add('open');
+    trigger.classList.add('open');
+  }
+}
+
+function onMsOptionChange(key, checkbox){
+  const panel = document.getElementById('f'+key+'Panel');
+  const checkedCount = panel.querySelectorAll('input:checked').length;
+  if(checkbox.checked && checkedCount > MAX_TAG_SELECT){
+    checkbox.checked = false;
+    showToast(`You can select up to ${MAX_TAG_SELECT}`);
+  }
+  updateMsTriggerLabel(key);
+}
+
+function updateMsTriggerLabel(key){
+  const panel = document.getElementById('f'+key+'Panel');
+  const label = document.getElementById('f'+key+'TriggerLabel');
+  const checked = [...panel.querySelectorAll('input:checked')].map(i => i.value);
+  const noun = key === 'Classes' ? 'classes' : 'subjects';
+
+  label.textContent = checked.length
+    ? `${checked.slice(0, 2).join(', ')}${checked.length > 2 ? ` +${checked.length - 2} more` : ''} (${checked.length}/${MAX_TAG_SELECT})`
+    : `Select up to ${MAX_TAG_SELECT} ${noun}`;
+
+  const atCap = checked.length >= MAX_TAG_SELECT;
+  panel.querySelectorAll('.ms-option').forEach(opt => {
+    const input = opt.querySelector('input');
+    opt.classList.toggle('disabled', atCap && !input.checked);
+  });
+}
+
+function setMsSelected(key, values){
+  const vals = new Set(values || []);
+  const panel = document.getElementById('f'+key+'Panel');
+  panel.querySelectorAll('input').forEach(input => {
+    input.checked = vals.has(input.value);
+  });
+  updateMsTriggerLabel(key);
+}
+
+function getMsSelected(key){
+  return [...document.querySelectorAll('#f'+key+'Panel input:checked')].map(i => i.value);
+}
+
+// Close any open dropdown panel when clicking outside of it.
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('.ms-field')){
+    document.querySelectorAll('.ms-panel.open').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.ms-trigger.open').forEach(t => t.classList.remove('open'));
+  }
+});
+
+/* Formats with a single, fixed content type: pdf→pdf file, image→image file,
+   video→link only. 'book', 'summary', 'library', and the three Papers
+   formats (Past/Latest/Excel Papers) all let the admin pick the content
+   type separately (link, PDF file, physical book, or image — Papers formats
+   omit "physical book" since a paper is always a digital file or link). */
+const MULTI_TYPE_FORMATS = ['summary', 'library', 'book', ...PAPER_FORMATS];
+
+function getEffectiveContentType(){
+  const format = document.getElementById('fFormat').value;
+  if(MULTI_TYPE_FORMATS.includes(format)) return document.getElementById('fContentType').value;
+  if(format === 'video') return 'link';
+  return format; // 'pdf' | 'image'
+}
+
+function updateFormatUI(){
+  const format = document.getElementById('fFormat').value;
+  const isMultiType = MULTI_TYPE_FORMATS.includes(format);
+  const isPaperFormat = PAPER_FORMATS.includes(format);
+
+  if(isMultiType){
+    // Papers formats never offer "physical book" as a content type.
+    const options = isPaperFormat ? CONTENT_TYPES_FOR_PAPERS : CONTENT_TYPES_FOR_MULTI;
+    const contentTypeSel = document.getElementById('fContentType');
+    const current = contentTypeSel.value;
+    contentTypeSel.innerHTML = options.map(c => `<option value="${c}">${CONTENT_TYPE_LABELS[c]}</option>`).join('');
+    contentTypeSel.value = options.includes(current) ? current : options[0];
+  }
+  document.getElementById('contentTypeRow').classList.toggle('hidden', !isMultiType);
+
+  const effectiveType = getEffectiveContentType();
+
+  document.getElementById('linkRow').classList.toggle('hidden', effectiveType !== 'link');
+  document.getElementById('fileRow').classList.toggle('hidden', effectiveType !== 'pdf' && effectiveType !== 'image');
+  document.getElementById('bookNote').classList.toggle('hidden', effectiveType !== 'book');
+
+  if(effectiveType === 'pdf'){
+    document.getElementById('fFileInput').setAttribute('accept', '.pdf,application/pdf');
+    document.getElementById('fFileInput').removeAttribute('multiple');
+    document.getElementById('fileLabel').textContent = 'Upload PDF file';
+  } else if(effectiveType === 'image'){
+    document.getElementById('fFileInput').setAttribute('accept', 'image/*');
+    document.getElementById('fFileInput').setAttribute('multiple', '');
+    document.getElementById('fileLabel').textContent = 'Upload image file(s) — up to 5 at once';
+  }
+
+  renderExistingFileNote();
+  syncPaperToggleWithFormat(format);
+}
+
+/* Picking one of the three dedicated Papers formats implies the matching
+   Past paper / Latest paper toggle, so there's no way to end up in a
+   contradictory state (format = "Past Papers" but the toggle left off).
+   The toggle is locked (disabled) while a Papers format drives it, but goes
+   back to being freely editable for every other format — exactly like
+   before, where any format could optionally be marked past/latest paper. */
+function syncPaperToggleWithFormat(format){
+  const pastToggle = document.getElementById('fIsPastPaper');
+  const latestToggle = document.getElementById('fIsLatestPaper');
+
+  if(format === 'pastpapers' || format === 'excelpapers'){
+    pastToggle.checked = true;
+    pastToggle.disabled = true;
+  } else {
+    pastToggle.disabled = false;
+  }
+
+  if(format === 'latestpapers'){
+    latestToggle.checked = true;
+    latestToggle.disabled = true;
+  } else {
+    latestToggle.disabled = false;
+  }
+
+  // "Excel" is the one board that also surfaces in the app's dedicated
+  // "Excel Papers" tile, so default to it (still editable) to save typing.
+  if(format === 'excelpapers'){
+    const boardInput = document.getElementById('fExamBoard');
+    if(!boardInput.value.trim()) boardInput.value = 'Excel';
+  }
+
+  updatePaperFieldsUI();
+}
+
+function renderExistingFileNote(){
+  const note = document.getElementById('fExistingFileNote');
+  const countNote = document.getElementById('fFileCountNote');
+  const files = document.getElementById('fFileInput').files;
+  const fileChosen = files.length > 0;
+  const effectiveType = getEffectiveContentType();
+
+  if(effectiveType === 'image'){
+    if(fileChosen){
+      countNote.textContent = files.length > MAX_IMAGE_FILES
+        ? `You selected ${files.length} images — please choose ${MAX_IMAGE_FILES} or fewer.`
+        : `${files.length} image${files.length > 1 ? 's' : ''} selected.`;
+      countNote.style.color = files.length > MAX_IMAGE_FILES ? 'var(--danger)' : '';
+    } else {
+      countNote.textContent = '';
+    }
+    if(existingImageUrls.length && !fileChosen){
+      const links = existingImageUrls
+        .map((url, i) => `<a href="${url}" target="_blank" rel="noopener">image ${i + 1}</a>`)
+        .join(', ');
+      note.innerHTML = `Current image${existingImageUrls.length > 1 ? 's' : ''}: ${links} — choose new image(s) above to replace ${existingImageUrls.length > 1 ? 'them' : 'it'}.`;
+    } else {
+      note.textContent = '';
+    }
+    return;
+  }
+
+  countNote.textContent = '';
+  if(existingFileUrl && !fileChosen){
+    note.innerHTML = `Current file: <a href="${existingFileUrl}" target="_blank" rel="noopener">view</a> — choose a new file above to replace it.`;
+  } else {
+    note.textContent = '';
+  }
+}
+
+function updatePriceVisibility(){
+  const isFree = document.getElementById('fIsFree').checked;
+  document.getElementById('priceRow').classList.toggle('hidden', isFree);
+  document.getElementById('pinRow').classList.toggle('hidden', isFree);
+}
+
+/* =========================================================================
+   PAST PAPERS (examination board + year)
+   Boards aren't a separate table — they're simply whatever distinct
+   `examBoard` values already exist across the catalog. Typing a name that
+   matches an existing board (ignoring case/spacing) groups the new material
+   with it; typing anything else quietly creates a new board. "Excel" is the
+   one board that also surfaces in the app's dedicated "Excel Papers" tile.
+   ========================================================================= */
+function getExistingExamBoards(){
+  const seen = new Map(); // lowercase key -> first-seen display casing
+  Object.values(catalog).forEach(item => {
+    if(item && !item.deleted && item.examBoard){
+      const key = item.examBoard.trim().toLowerCase();
+      if(key && !seen.has(key)) seen.set(key, item.examBoard.trim());
+    }
+  });
+  return [...seen.values()].sort((a, b) => a.localeCompare(b));
+}
+
+function normalizeExamBoard(input){
+  const trimmed = (input || '').trim();
+  if(!trimmed) return '';
+  const match = getExistingExamBoards().find(b => b.toLowerCase() === trimmed.toLowerCase());
+  return match || trimmed; // reuse existing casing if it's the same board, else create new
+}
+
+function populateExamBoardList(){
+  const list = document.getElementById('examBoardList');
+  if(list) list.innerHTML = getExistingExamBoards().map(b => `<option value="${escapeHtml(b)}"></option>`).join('');
+}
+
+function updatePaperFieldsUI(){
+  // Latest papers now carry an examination board + year too, just like
+  // past papers, so the fields show up for either toggle and share the
+  // same underlying examBoard/examYear columns.
+  const showBoardYear = document.getElementById('fIsPastPaper').checked || document.getElementById('fIsLatestPaper').checked;
+  document.getElementById('examBoardRow').classList.toggle('hidden', !showBoardYear);
+  document.getElementById('examYearRow').classList.toggle('hidden', !showBoardYear);
+  if(showBoardYear) populateExamBoardList();
+}
+
+function openItemModal(id, presets){
+  editingId = id || null;
+  const item = id ? catalog[id] : null;
+
+  document.getElementById('modalTitle').textContent = id
+    ? 'Edit material'
+    : (presets?.subject ? `Add ${presets.subject} material` : 'Add material');
+  document.getElementById('modalDeleteBtn').classList.toggle('hidden', !id);
+
+  document.getElementById('fName').value = item?.name || '';
+  document.getElementById('fDesc').value = item?.desc || '';
+  document.getElementById('fIcon').value = item?.icon || 'book';
+
+  // Format: fall back to the first entry of the old multi-select `formats`
+  // array for materials created before this feature existed. When opened
+  // from a subject tile, presets.format seeds a brand-new item straight
+  // into that subject's category (Past Papers / Latest Papers / Summary /
+  // Notes / Videos) instead of defaulting to plain PDF.
+  const legacyFormat = (item?.formats && item.formats[0]) || 'pdf';
+  const format = item?.format || (!id && presets?.format) || legacyFormat;
+  document.getElementById('fFormat').value = format;
+
+  const defaultContentType = (format === 'summary' || format === 'library' || format === 'book' || format === 'video') ? 'link' : format;
+  const contentType = item?.contentType || defaultContentType;
+  document.getElementById('fContentType').value = contentType;
+
+  document.getElementById('fLink').value = (contentType === 'link' && item?.contentUrl) ? item.contentUrl : '';
+  document.getElementById('fFileInput').value = '';
+  existingFileUrl = (contentType === 'pdf') ? (item?.contentUrl || null) : null;
+  existingImageUrls = (contentType === 'image')
+    ? (Array.isArray(item?.contentUrls) && item.contentUrls.length ? item.contentUrls : (item?.contentUrl ? [item.contentUrl] : []))
+    : [];
+
+  document.getElementById('fIsNew').checked = !!item?.isNew;
+  document.getElementById('fIsFree').checked = !!item?.isFree;
+  document.getElementById('fPrice').value = (item?.price ?? '') === '' ? '' : item.price;
+  document.getElementById('fPin').value = item?.pin || '';
+  document.getElementById('fIsFeatured').checked = !!item?.isFeatured;
+
+  setMsSelected('Classes', item?.classes || []); // no default pre-selection — max 5 allowed
+  setMsSelected('Subjects', item?.subjects || (!id && presets?.subject ? [presets.subject] : [])); // seeded from the subject tile when adding a new item that way
+
+  document.getElementById('fIsPastPaper').checked = !!item?.isPastPaper;
+  document.getElementById('fIsLatestPaper').checked = !!item?.isLatestPaper;
+  document.getElementById('fExamBoard').value = item?.examBoard || '';
+  document.getElementById('fExamYear').value = item?.examYear ?? '';
+  populateExamBoardList();
+  updatePaperFieldsUI();
+
+  updateFormatUI();
+  updatePriceVisibility();
+
+  document.getElementById('itemModalOverlay').classList.add('show');
+  pushOverlayHistory('item');
+  offerItemDraftRestore();
+}
+
+function hideItemModal(){
+  document.getElementById('itemModalOverlay').classList.remove('show');
+  editingId = null;
+  existingFileUrl = null;
+  existingImageUrls = [];
+}
+
+function closeItemModal(){
+  clearItemDraft();
+  hideItemModal();
+  popOverlayHistory('item');
+}
+
+/* =========================================================================
+   ITEM MODAL DRAFT AUTOSAVE (crash recovery)
+   Some mobile browsers reload or discard the page when the native file
+   picker opens (this is an OS/browser limitation, not something the app
+   can prevent). To make sure a title, description or other details typed
+   in aren't lost when that happens, every change to the form is mirrored
+   to localStorage. A File itself can't be saved this way — only its name,
+   as a reminder to re-choose it — but everything else survives and is
+   offered back the next time the modal opens.
+   ========================================================================= */
+function captureItemDraft(){
+  const pickedFile = document.getElementById('fFileInput').files[0];
+  return {
+    editingId,
+    savedAt: Date.now(),
+    fName: document.getElementById('fName').value,
+    fDesc: document.getElementById('fDesc').value,
+    fIcon: document.getElementById('fIcon').value,
+    fFormat: document.getElementById('fFormat').value,
+    fContentType: document.getElementById('fContentType').value,
+    fLink: document.getElementById('fLink').value,
+    fPickedFileName: pickedFile ? pickedFile.name : '',
+    fIsNew: document.getElementById('fIsNew').checked,
+    fIsFree: document.getElementById('fIsFree').checked,
+    fPrice: document.getElementById('fPrice').value,
+    fPin: document.getElementById('fPin').value,
+    fIsFeatured: document.getElementById('fIsFeatured').checked,
+    classes: getMsSelected('Classes'),
+    subjects: getMsSelected('Subjects'),
+    fIsPastPaper: document.getElementById('fIsPastPaper').checked,
+    fIsLatestPaper: document.getElementById('fIsLatestPaper').checked,
+    fExamBoard: document.getElementById('fExamBoard').value,
+    fExamYear: document.getElementById('fExamYear').value,
+  };
+}
+
+// Debounced so rapid typing doesn't hit localStorage on every keystroke.
+function saveItemDraftSoon(){
+  if(!document.getElementById('itemModalOverlay').classList.contains('show')) return;
+  clearTimeout(itemDraftSaveTimer);
+  itemDraftSaveTimer = setTimeout(() => {
+    try{ localStorage.setItem(ITEM_DRAFT_KEY, JSON.stringify(captureItemDraft())); } catch(e){}
+  }, 300);
+}
+
+function clearItemDraft(){
+  clearTimeout(itemDraftSaveTimer);
+  try{ localStorage.removeItem(ITEM_DRAFT_KEY); } catch(e){}
+}
+
+function readItemDraft(){
+  try{
+    const raw = localStorage.getItem(ITEM_DRAFT_KEY);
+    if(!raw) return null;
+    const draft = JSON.parse(raw);
+    // Ignore anything older than 24 hours so a very stale draft never
+    // resurfaces unexpectedly.
+    if(!draft.savedAt || (Date.now() - draft.savedAt) > 24 * 60 * 60 * 1000) return null;
+    return draft;
+  } catch(e){ return null; }
+}
+
+function applyItemDraft(draft){
+  document.getElementById('fName').value = draft.fName || '';
+  document.getElementById('fDesc').value = draft.fDesc || '';
+  document.getElementById('fIcon').value = draft.fIcon || 'book';
+  document.getElementById('fFormat').value = draft.fFormat || 'pdf';
+  document.getElementById('fContentType').value = draft.fContentType || '';
+  document.getElementById('fLink').value = draft.fLink || '';
+  document.getElementById('fIsNew').checked = !!draft.fIsNew;
+  document.getElementById('fIsFree').checked = !!draft.fIsFree;
+  document.getElementById('fPrice').value = draft.fPrice ?? '';
+  document.getElementById('fPin').value = draft.fPin || '';
+  document.getElementById('fIsFeatured').checked = !!draft.fIsFeatured;
+  setMsSelected('Classes', draft.classes || []);
+  setMsSelected('Subjects', draft.subjects || []);
+  document.getElementById('fIsPastPaper').checked = !!draft.fIsPastPaper;
+  document.getElementById('fIsLatestPaper').checked = !!draft.fIsLatestPaper;
+  document.getElementById('fExamBoard').value = draft.fExamBoard || '';
+  document.getElementById('fExamYear').value = draft.fExamYear || '';
+  populateExamBoardList();
+  updatePaperFieldsUI();
+  updateFormatUI();
+  updatePriceVisibility();
+  if(draft.fPickedFileName){
+    document.getElementById('fFileCountNote').textContent =
+      `Your file "${draft.fPickedFileName}" wasn't restored — please choose it again above.`;
+    document.getElementById('fFileCountNote').style.color = 'var(--danger)';
+  }
+}
+
+// Called right after the modal's fields have already been populated for
+// this id (fresh "new" fields, or the existing item's saved data) — offers
+// to overlay a newer draft on top if one is waiting.
+async function offerItemDraftRestore(){
+  const draft = readItemDraft();
+  if(!draft) return;
+  // Only offer a draft that belongs to this same "new" form or this same
+  // item — never bleed draft text from one item into an unrelated one.
+  if(draft.editingId !== editingId){ clearItemDraft(); return; }
+  const minutesAgo = Math.max(1, Math.round((Date.now() - draft.savedAt) / 60000));
+  const label = draft.fName ? `"${draft.fName}"` : 'your last entry';
+  const restore = await customConfirm(
+    `It looks like the app closed while you were filling this in ${minutesAgo} minute${minutesAgo === 1 ? '' : 's'} ago. Restore ${label}?`,
+    'Restore'
+  );
+  if(restore){
+    applyItemDraft(draft);
+  } else {
+    clearItemDraft();
+  }
+}
+
+// Any change anywhere inside the Add/Edit Material modal autosaves a draft.
+document.getElementById('itemModalOverlay').addEventListener('input', saveItemDraftSoon);
+document.getElementById('itemModalOverlay').addEventListener('change', saveItemDraftSoon);
+
+async function saveCurrentItem(){
+  const name = document.getElementById('fName').value.trim();
+  if(!name){
+    showToast('Please enter a title');
+    return;
+  }
+
+  const format = document.getElementById('fFormat').value;
+  const effectiveType = getEffectiveContentType();
+
+  let contentUrl = null;
+  let contentUrls = null; // only populated for 'image' — array of every uploaded image URL (max 5)
+  if(effectiveType === 'link'){
+    contentUrl = document.getElementById('fLink').value.trim();
+    if(!contentUrl){
+      showToast('Please add a link');
+      return;
+    }
+  } else if(effectiveType === 'pdf'){
+    const file = document.getElementById('fFileInput').files[0];
+    if(file){
+      showToast('Uploading file…');
+      try{
+        contentUrl = await window.ExcelAdmin.uploadFile(file, effectiveType);
+      } catch(err){
+        errorToast('File upload failed', err);
+        return;
+      }
+    } else if(existingFileUrl){
+      contentUrl = existingFileUrl; // keep the file already on this item
+    } else {
+      showToast('Please choose a PDF file to upload');
+      return;
+    }
+  } else if(effectiveType === 'image'){
+    const files = [...document.getElementById('fFileInput').files];
+    if(files.length > MAX_IMAGE_FILES){
+      showToast(`Please choose ${MAX_IMAGE_FILES} images or fewer`);
+      return;
+    }
+    if(files.length > 0){
+      showToast(files.length > 1 ? `Uploading ${files.length} images…` : 'Uploading file…');
+      try{
+        contentUrls = [];
+        for(const file of files){
+          contentUrls.push(await window.ExcelAdmin.uploadFile(file, effectiveType));
+        }
+      } catch(err){
+        errorToast('File upload failed', err);
+        return;
+      }
+    } else if(existingImageUrls.length){
+      contentUrls = existingImageUrls; // keep the image(s) already on this item
+    } else {
+      showToast('Please choose at least one image file to upload');
+      return;
+    }
+    contentUrl = contentUrls[0]; // kept in sync for anything still reading a single contentUrl
+  }
+  // effectiveType === 'book' → contentUrl stays null; it's a physical item
+
+  const isFree = document.getElementById('fIsFree').checked;
+  const priceRaw = document.getElementById('fPrice').value;
+  const price = (!isFree && priceRaw !== '') ? Number(priceRaw) : null;
+  // A free item is never locked, so its PIN is cleared regardless of what
+  // was typed. A paid item keeps whatever PIN is entered (or null, meaning
+  // it's paid but left viewable without a PIN — flagged below).
+  const pin = isFree ? null : (document.getElementById('fPin').value.trim() || null);
+
+  if(!isFree && !pin){
+    if(!(await customConfirm('You set a price but left the Unlock PIN blank — students won\'t be asked for a PIN and this material will stay viewable without one. Save anyway?', 'Save anyway'))) return;
+  }
+
+  // "New" badges auto-expire 7 days after a material is first marked new —
+  // no manual date entry needed. newSince is stamped the moment isNew goes
+  // from unchecked to checked, kept as-is while it stays checked, and
+  // cleared the moment it's unchecked (so re-checking it later restarts
+  // the 7-day clock).
+  const existingItem = editingId ? catalog[editingId] : null;
+  const isNew = document.getElementById('fIsNew').checked;
+  let newSince = existingItem?.newSince || null;
+  if(isNew && !existingItem?.isNew) newSince = new Date().toISOString();
+  if(!isNew) newSince = null;
+
+  // Past paper / Latest paper: examination board (grouped with any existing
+  // board of the same name, case/spacing-insensitive) + the year it was
+  // sat. Both toggles share the same examBoard/examYear columns.
+  const isPastPaper = document.getElementById('fIsPastPaper').checked;
+  const isLatestPaper = document.getElementById('fIsLatestPaper').checked;
+  let examBoard = null;
+  let examYear = null;
+  if(isPastPaper || isLatestPaper){
+    const label = isPastPaper ? 'past paper' : 'latest paper';
+    examBoard = normalizeExamBoard(document.getElementById('fExamBoard').value);
+    if(!examBoard){
+      showToast(`Please enter the examination board for this ${label}`);
+      return;
+    }
+    const yearRaw = document.getElementById('fExamYear').value;
+    examYear = yearRaw !== '' ? Number(yearRaw) : null;
+    if(!examYear){
+      showToast(`Please enter the exam year for this ${label}`);
+      return;
+    }
+  }
+
+  const data = {
+    name,
+    desc: document.getElementById('fDesc').value.trim(),
+    icon: document.getElementById('fIcon').value,
+    order: editingId ? (catalog[editingId]?.order ?? 0) : getNewItemOrder(),
+    format,
+    formats: [format], // kept so the customer app's existing "browse by format" filter still works
+    contentType: effectiveType,
+    contentUrl,
+    contentUrls, // array of image URLs when contentType is 'image' (max 5), otherwise null
+    classes: getMsSelected('Classes'),
+    subjects: getMsSelected('Subjects'),
+    isPastPaper,
+    examBoard, // examination board/company for this past/latest paper (null if neither)
+    examYear,  // the year this past/latest paper was sat (null if neither)
+    isLatestPaper, // shows in the app's "Latest Papers" tile
+    isNew,
+    newSince, // drives the 7-day auto-expiry of the "NEW" badge in both apps
+    isFree,
+    price,
+    pin, // unlock PIN for paid materials — never sent to the customer app's catalog query
+    isFeatured: document.getElementById('fIsFeatured').checked,
+  };
+
+  const id = editingId || window.ExcelAdmin.newItemId();
+  try{
+    await window.ExcelAdmin.saveItem(id, data);
+    showToast(editingId ? 'Material updated' : 'Material added');
+    closeItemModal();
+  } catch(err){
+    errorToast('Save failed', err);
+  }
+}
+
+async function deleteCurrentItem(){
+  if(!editingId) return;
+  if(!(await customConfirm('Move this material to trash? It will be hidden from the customer app immediately, and you can restore or permanently delete it later from the Trash view.', 'Move to trash'))) return;
+  try{
+    await window.ExcelAdmin.saveItem(editingId, { ...catalog[editingId], deleted:true, deletedAt: new Date().toISOString() });
+    showToast('Moved to trash');
+    closeItemModal();
+  } catch(err){
+    errorToast('Move to trash failed', err);
+  }
+}
+
+/* =========================================================================
+   TRASH (restore / permanent delete)
+   ========================================================================= */
+async function restoreItem(id){
+  try{
+    const { deleted, deletedAt, ...rest } = catalog[id] || {};
+    await window.ExcelAdmin.saveItem(id, { ...rest, deleted:false });
+    showToast('Material restored');
+  } catch(err){
+    errorToast('Restore failed', err);
+  }
+}
+
+async function permanentlyDeleteItem(id){
+  const item = catalog[id];
+  if(!(await customConfirm(`Permanently delete "${item?.name || 'this material'}"? This cannot be undone.`, 'Delete permanently'))) return;
+  try{
+    await window.ExcelAdmin.deleteItem(id);
+    showToast('Deleted permanently');
+  } catch(err){
+    errorToast('Delete failed', err);
+  }
+}
+
+/* =========================================================================
+   NOTIFICATIONS
+   Lets admins post short announcements ("New Chemistry paper added", etc.)
+   that show up in the student app's notification inbox. See the Supabase
+   setup note near the top of this file for the `notifications` table.
+   ========================================================================= */
+function formatNotifDate(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }) + ' · ' +
+         d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+}
+
+function renderNotifications(){
+  const list = document.getElementById('notificationList');
+  const empty = document.getElementById('notifEmptyState');
+  const badge = document.getElementById('notifBadge');
+
+  if(badge){
+    if(notifications.length){
+      badge.style.display = 'flex';
+      badge.textContent = notifications.length > 99 ? '99+' : notifications.length;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  if(!notifications.length){
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  list.innerHTML = notifications.map(n => `
+    <div class="item-row">
+      <div class="item-icon">🔔</div>
+      <div class="item-body">
+        <p class="name">${escapeHtml(n.title || 'Untitled')}</p>
+        <p class="desc">${escapeHtml(n.body || '')}</p>
+        <div class="item-flags"><span class="flag order">${formatNotifDate(n.created_at)}</span></div>
+      </div>
+      <div class="item-actions">
+        <button class="icon-btn danger" title="Delete" onclick="deleteNotification('${n.id}')">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function sendNotification(){
+  const title = document.getElementById('nTitle').value.trim();
+  const body = document.getElementById('nBody').value.trim();
+  if(!title){
+    showToast('Please add a title');
+    return;
+  }
+  try{
+    await window.ExcelAdmin.sendNotification({ title, body });
+    document.getElementById('nTitle').value = '';
+    document.getElementById('nBody').value = '';
+    showToast('Notification sent to the app');
+  } catch(err){
+    errorToast('Send failed', err);
+  }
+}
+
+async function deleteNotification(id){
+  if(!(await customConfirm('Delete this notification? It will disappear from the student app.', 'Delete'))) return;
+  try{
+    await window.ExcelAdmin.deleteNotification(id);
+    showToast('Notification deleted');
+  } catch(err){
+    errorToast('Delete failed', err);
+  }
+}
+
+/* =========================================================================
+   HELP & SUPPORT
+   Lets a student message the admin from Settings → Help & Support in the
+   student app, and lets the admin reply here. Conversations are grouped
+   client-side by device_id (one thread per device — see the Supabase
+   setup note near the top of this file for the `support_messages` table).
+   ========================================================================= */
+let supportMessages = []; // raw rows from `support_messages`, oldest first
+let activeHelpThreadDeviceId = null;
+
+function helpConversations(){
+  const byDevice = {};
+  supportMessages.forEach(m => {
+    if(!byDevice[m.device_id]) byDevice[m.device_id] = [];
+    byDevice[m.device_id].push(m);
+  });
+  return Object.keys(byDevice).map(deviceId => {
+    const msgs = byDevice[deviceId];
+    const last = msgs[msgs.length - 1];
+    const named = [...msgs].reverse().find(m => m.sender === 'student' && m.user_name);
+    return {
+      deviceId,
+      userId: named ? named.user_id : null,
+      userName: (named && named.user_name) || 'Guest',
+      lastMessage: last.message,
+      lastSender: last.sender,
+      lastTime: last.created_at,
+      unread: msgs.some(m => m.sender === 'student' && !m.read_by_admin),
+    };
+  }).sort((a, b) => (b.lastTime || '').localeCompare(a.lastTime || ''));
+}
+
+function renderHelpConversations(){
+  const list = document.getElementById('helpConversationList');
+  const empty = document.getElementById('helpConversationsEmpty');
+  const navBadge = document.getElementById('helpNavBadge');
+  if(!list || !empty) return;
+
+  const convos = helpConversations();
+  const unreadCount = convos.filter(c => c.unread).length;
+  if(navBadge){
+    if(unreadCount){
+      navBadge.style.display = 'flex';
+      navBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+    } else {
+      navBadge.style.display = 'none';
+    }
+  }
+
+  if(!convos.length){
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  list.innerHTML = convos.map(c => `
+    <div class="item-row help-conv-row ${c.unread ? 'unread' : ''}" onclick="openHelpThreadModal('${c.deviceId}')">
+      <div class="item-icon">${c.unread ? '🔴' : '💬'}</div>
+      <div class="item-body">
+        <p class="name">${escapeHtml(c.userName)}</p>
+        <p class="desc">${c.lastSender === 'admin' ? 'You: ' : ''}${escapeHtml((c.lastMessage || '').slice(0, 80))}</p>
+        <div class="item-flags"><span class="flag order">${formatNotifDate(c.lastTime)}</span></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openHelpThreadModal(deviceId){
+  activeHelpThreadDeviceId = deviceId;
+  const convo = helpConversations().find(c => c.deviceId === deviceId);
+  document.getElementById('helpThreadTitle').textContent = convo ? convo.userName : 'Conversation';
+  renderHelpThreadMessages();
+  document.getElementById('helpThreadModalOverlay').classList.add('show');
+  pushOverlayHistory('helpThread');
+  window.ExcelAdmin.markThreadReadByAdmin(deviceId).then(renderHelpConversations).catch(()=>{});
+  // Reflect the read state locally right away too, without waiting on realtime.
+  supportMessages = supportMessages.map(m =>
+    (m.device_id === deviceId && m.sender === 'student') ? { ...m, read_by_admin:true } : m
+  );
+}
+
+function hideHelpThreadModal(){
+  document.getElementById('helpThreadModalOverlay').classList.remove('show');
+}
+
+function closeHelpThreadModal(){
+  hideHelpThreadModal();
+  popOverlayHistory('helpThread');
+}
+
+function renderHelpThreadMessages(){
+  const list = document.getElementById('helpThreadMessages');
+  const empty = document.getElementById('helpThreadEmpty');
+  if(!list || !empty) return;
+
+  const msgs = supportMessages.filter(m => m.device_id === activeHelpThreadDeviceId);
+  if(!msgs.length){
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  list.innerHTML = msgs.map(m => `
+    <div class="help-msg ${m.sender === 'admin' ? 'from-admin' : 'from-student'}"
+         onmousedown="startHelpLongPress('${m.id}')" onmouseup="cancelHelpLongPress()" onmouseleave="cancelHelpLongPress()"
+         ontouchstart="startHelpLongPress('${m.id}')" ontouchend="cancelHelpLongPress()" ontouchcancel="cancelHelpLongPress()"
+         oncontextmenu="event.preventDefault(); return false;">
+      <p class="help-msg-text">${escapeHtml(m.message || '')}</p>
+      <p class="help-msg-date">${m.sender === 'admin' ? 'You' : 'Student'} · ${formatNotifDate(m.created_at)}</p>
+    </div>
+  `).join('');
+  list.scrollTop = list.scrollHeight;
+}
+
+async function sendHelpReply(){
+  const input = document.getElementById('helpReplyInput');
+  const text = (input.value || '').trim();
+  if(!text || !activeHelpThreadDeviceId) return;
+  const convo = helpConversations().find(c => c.deviceId === activeHelpThreadDeviceId);
+  input.value = '';
+  try{
+    await window.ExcelAdmin.replySupportMessage(
+      { device_id: activeHelpThreadDeviceId, user_id: convo ? convo.userId : null },
+      text
+    );
+  } catch(err){
+    input.value = text;
+    errorToast('Reply failed', err);
+  }
+}
+
+// ---- Long-press to permanently delete a message (mirrors the materials
+// long-press-to-edit pattern above, with its own timer so the two never
+// interfere with each other). ----------------------------------------------
+let helpLongPressTimer = null;
+
+function startHelpLongPress(id){
+  cancelHelpLongPress();
+  helpLongPressTimer = setTimeout(() => confirmDeleteHelpMessage(id), 500);
+}
+
+function cancelHelpLongPress(){
+  clearTimeout(helpLongPressTimer);
+  helpLongPressTimer = null;
+}
+
+async function confirmDeleteHelpMessage(id){
+  if(!(await customConfirm('Delete this message? This cannot be undone.', 'Delete'))) return;
+  try{
+    await window.ExcelAdmin.deleteSupportMessage(id);
+    showToast('Message deleted');
+  } catch(err){
+    errorToast('Delete failed', err);
+  }
+}
+
+/* =========================================================================
+   TOAST
+   ========================================================================= */
+let toastTimer;
+function showToast(text){
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+// Reveal the dashboard immediately, before anything else — this must be the
+// very first thing that runs so the app never sits on a blank white screen,
+// even if something below throws or Supabase is slow/unreachable.
+document.getElementById('dashboard').classList.remove('hidden');
+document.getElementById('adminBottomNav').classList.remove('hidden');
+showAdminTab('home');
+
+try{
+  populateFormOptions();
+  initBackButton();
+} catch(err){
+  console.error('Admin init error (dashboard still shown):', err);
+}
+
+let catalogUnsub = null;
+let analyticsUnsub = null;
+let settingsUnsub = null;
+let notificationsUnsub = null;
+let supportMessagesUnsub = null;
+
+function startAdminApp(){
+  document.getElementById('dashboard').classList.remove('hidden');
+  document.getElementById('adminBottomNav').classList.remove('hidden');
+  showAdminTab('home');
+
+  if(!settingsUnsub){
+    settingsUnsub = window.ExcelAdmin.subscribeSettings((data) => {
+      appSettings = data || {};
+      applyBranding();
+    });
+  }
+  if(!catalogUnsub){
+    catalogUnsub = window.ExcelAdmin.subscribeCatalog((raw) => {
+      catalog = raw || {};
+      renderDashboard();
+    });
+  }
+  if(!analyticsUnsub){
+    analyticsUnsub = window.ExcelAdmin.subscribeAnalytics((rows) => {
+      analyticsRows = rows || [];
+      renderAnalytics();
+    });
+  }
+  if(!notificationsUnsub){
+    notificationsUnsub = window.ExcelAdmin.subscribeNotifications((rows) => {
+      notifications = rows || [];
+      renderNotifications();
+    });
+  }
+  if(!supportMessagesUnsub){
+    supportMessagesUnsub = window.ExcelAdmin.subscribeSupportMessages((rows) => {
+      supportMessages = rows || [];
+      renderHelpConversations();
+      if(document.getElementById('helpThreadModalOverlay').classList.contains('show')){
+        renderHelpThreadMessages();
+      }
+    });
+  }
+}
+
+// window.ExcelAdmin is defined by the classic <script> in <head> that sets
+// up Supabase, so by the time this line runs it should already exist. The
+// event-listener fallback is kept just in case script order ever changes.
+if(window.ExcelAdmin){
+  window.ExcelAdmin.onReady(startAdminApp);
+} else {
+  window.addEventListener('excel-admin-ready', () => window.ExcelAdmin.onReady(startAdminApp));
+}
+
+// If Supabase still hasn't loaded after several seconds, something is
+// actually failing (network block, ad-blocker, offline, etc.) rather than
+// just being slow — show a clear message instead of failing silently.
+setTimeout(() => {
+  if(!window.ExcelAdmin){
+    showToast('Could not load Supabase — check your connection, disable any ad-blocker for this page, and reload.');
+  }
+}, 6000);
+</script>
+</body>
+</html>
